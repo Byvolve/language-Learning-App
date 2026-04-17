@@ -1,0 +1,3499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Language Learning App</title>
+  <style>
+    /* ════════════════════════════════════════
+       THEME — CSS CUSTOM PROPERTIES
+    ════════════════════════════════════════ */
+    :root {
+      --bg:              #f0f4ff;
+      --surface:         #ffffff;
+      --surface-alt:     #f7f9ff;
+      --primary:         #4f74e3;
+      --primary-dark:    #3a5fc9;
+      --primary-bg:      #eef2ff;
+      --primary-border:  #c5d0f5;
+      --text:            #1a1f36;
+      --text-body:       #333333;
+      --muted:           #7c8db0;
+      --muted-light:     #b0bcd4;
+      --border:          #dce3f5;
+      --border-light:    #e8ecf5;
+      --correct:         #27ae60;
+      --correct-text:    #1e8449;
+      --correct-bg:      #eafaf1;
+      --correct-border:  #a3e6c0;
+      --wrong:           #e74c3c;
+      --wrong-text:      #c0392b;
+      --wrong-bg:        #fff0f0;
+      --wrong-border:    #f5c0c0;
+      --keyword:         #f5d060;
+      --keyword-bg:      #fff3c4;
+      --keyword-bar-bg:  #fffbf0;
+      --keyword-bar-bd:  #fde8a0;
+      --keyword-text:    #b48a00;
+      --keyword-chip:    #8a6300;
+    }
+    [data-theme="dark"] {
+      --bg:              #0f1120;
+      --surface:         #1a1f36;
+      --surface-alt:     #1e2545;
+      --primary:         #7b97f5;
+      --primary-dark:    #5a77e3;
+      --primary-bg:      #1a2563;
+      --primary-border:  #2a3870;
+      --text:            #e8ecf9;
+      --text-body:       #c8d0e8;
+      --muted:           #8b9dc0;
+      --muted-light:     #4a5580;
+      --border:          #2a3356;
+      --border-light:    #252d50;
+      --correct:         #2ecc71;
+      --correct-text:    #2ecc71;
+      --correct-bg:      #0d2b1a;
+      --correct-border:  #1a5a30;
+      --wrong:           #e74c3c;
+      --wrong-text:      #ff6b6b;
+      --wrong-bg:        #2b0d0d;
+      --wrong-border:    #5a1a1a;
+      --keyword:         #d4a017;
+      --keyword-bg:      #2b2200;
+      --keyword-bar-bg:  #1e1a00;
+      --keyword-bar-bd:  #3a3000;
+      --keyword-text:    #d4a017;
+      --keyword-chip:    #e6be40;
+    }
+
+    /* ════════════════════════════════════════
+       BASE
+    ════════════════════════════════════════ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 30px 20px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 36px 40px;
+      max-width: 640px;
+      width: 100%;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      position: relative;
+    }
+    [data-theme="dark"] .card { box-shadow: 0 8px 30px rgba(0,0,0,0.50); }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ════ CARD TOPBAR (lang indicator + theme toggle) ════ */
+    .card-topbar {
+      position: absolute;
+      top: 14px; right: 14px;
+      z-index: 10;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .lang-indicator {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--primary-bg);
+      color: var(--primary);
+      border: 1.5px solid var(--primary-border);
+      border-radius: 99px;
+      padding: 5px 12px;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .lang-indicator:hover { background: var(--border); }
+    .lang-indicator:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .lang-indicator.hidden { display: none; }
+
+    .theme-toggle-btn {
+      background: var(--surface-alt);
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      width: 34px; height: 34px;
+      font-size: 16px; line-height: 1;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .theme-toggle-btn:hover { background: var(--border); }
+    .theme-toggle-btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    /* ════ BACK LINK ════ */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      cursor: pointer; margin-bottom: 24px;
+      border: none; background: none; padding: 0;
+      font-family: inherit;
+    }
+    .back-link:hover { color: var(--primary); }
+    .back-link:focus { outline: 2px solid var(--primary); border-radius: 4px; }
+
+    /* ════ LANGUAGE SELECTION SCREENS ════ */
+    .lang-screen-header {
+      text-align: center; margin-bottom: 36px; padding-top: 8px;
+    }
+    .lang-screen-header h1 {
+      font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 10px;
+    }
+    .lang-screen-header p { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    .lang-options { display: flex; gap: 16px; }
+
+    .lang-option-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      border: 2px solid var(--border); border-radius: 16px;
+      padding: 28px 16px; background: var(--surface-alt); cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+    .lang-option-btn:hover { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-2px); }
+    .lang-option-btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .lang-flag { font-size: 44px; line-height: 1; }
+    .lang-name { font-size: 17px; font-weight: 800; color: var(--text); }
+    .lang-native { font-size: 13px; color: var(--muted); }
+
+    /* ════ HOME SCREEN ════ */
+    .home-wrapper { text-align: center; padding: 48px 0 32px; }
+    .home-app-icon { font-size: 64px; line-height: 1; margin-bottom: 22px; }
+    .home-title { font-size: 30px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .home-subtitle { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    .home-progress-panel { display: flex; flex-direction: column; align-items: center; gap: 12px; background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 16px; padding: 18px 24px; margin-bottom: 24px; }
+    .home-prog-stats { display: flex; justify-content: center; gap: 36px; }
+    .home-prog-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .home-prog-number { font-size: 30px; font-weight: 800; color: var(--primary); line-height: 1; }
+    .home-prog-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .home-actions { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ════ PRACTICE SELECT ════ */
+    .practice-select-header { margin-bottom: 28px; padding-top: 8px; }
+    .practice-select-header h1 { font-size: 22px; font-weight: 800; color: var(--text); }
+
+    .practice-option-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .practice-select-btn {
+      display: flex; align-items: center; gap: 16px;
+      border: 2px solid var(--border); border-radius: 16px;
+      padding: 18px 20px; background: var(--surface-alt); cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      font-family: inherit; text-align: left; width: 100%;
+    }
+    .practice-select-btn:hover { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-2px); }
+    .practice-select-btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .practice-select-flag { font-size: 36px; line-height: 1; flex-shrink: 0; }
+    .practice-select-name { font-size: 17px; font-weight: 800; color: var(--text); }
+    .practice-select-sub  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ════ CEFR LEVEL BUTTONS ════ */
+    .cefr-level-btn { display:flex; align-items:center; gap:16px; border:2px solid var(--border); border-radius:16px; padding:18px 20px; background:var(--surface-alt); cursor:pointer; transition:border-color .15s,background .15s,transform .1s; font-family:inherit; text-align:left; width:100%; }
+    .cefr-level-btn:hover { border-color:var(--primary); background:var(--primary-bg); transform:translateY(-2px); }
+    .cefr-level-btn:focus { outline:2px solid var(--primary); outline-offset:2px; }
+    .cefr-level-icon { font-size:36px; line-height:1; flex-shrink:0; }
+    .cefr-level-body { flex:1; }
+    .cefr-level-name { font-size:17px; font-weight:800; color:var(--text); }
+    .cefr-level-sub  { font-size:13px; color:var(--muted); margin-top:2px; }
+    .cefr-level-tag  { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; border-radius:99px; padding:3px 10px; margin-left:auto; flex-shrink:0; align-self:center; }
+    .cefr-tag-a0   { background:#fff3c4; color:#8a6300; border:1.5px solid #f5d060; }
+    .cefr-tag-a1   { background:#e8f5e9; color:#2e7d32; border:1.5px solid #81c784; }
+    .cefr-tag-a2   { background:#e3f2fd; color:#1565c0; border:1.5px solid #64b5f6; }
+    .cefr-tag-more { background:var(--border-light,#f0f0f0); color:var(--primary); border:1.5px solid var(--primary-border,var(--primary)); }
+    [data-theme="dark"] .cefr-tag-a0   { background:#2b2200; color:#d4a017; border-color:#3a3000; }
+    [data-theme="dark"] .cefr-tag-a1   { background:#0d2b0d; color:#66bb6a; border-color:#1b5e20; }
+    [data-theme="dark"] .cefr-tag-a2   { background:#0d1f3c; color:#64b5f6; border-color:#1a3a6a; }
+    [data-theme="dark"] .cefr-tag-more { background:var(--primary-bg); color:var(--primary); border-color:var(--primary); }
+
+    /* ════ ABOUT SCREEN ════ */
+    .about-header { margin-bottom: 28px; }
+    .about-header h1 { font-size: 22px; font-weight: 800; color: var(--text); }
+    .about-section { margin-bottom: 22px; padding: 18px 20px; background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 14px; }
+    .about-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px; }
+    .about-value { font-size: 16px; color: var(--text); font-weight: 600; line-height: 1.5; }
+    .about-link { color: var(--primary); text-decoration: none; font-weight: 700; }
+    .about-link:hover { text-decoration: underline; }
+    .about-link:focus { outline: 2px solid var(--primary); border-radius: 2px; }
+
+    /* ════ STORY SELECTION ════ */
+    .select-header { margin-bottom: 28px; }
+    .select-header .label-sm {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .select-header h1 { font-size: 26px; font-weight: 800; color: var(--text); }
+
+    .story-cards { display: flex; flex-direction: column; gap: 16px; }
+
+    .story-card {
+      display: flex; align-items: center; gap: 18px;
+      border: 2px solid var(--border); border-radius: 16px;
+      padding: 18px 20px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      background: var(--surface-alt); width: 100%; text-align: left;
+      font-family: inherit;
+    }
+    .story-card:hover { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-2px); }
+    .story-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .story-card-emoji { font-size: 38px; line-height: 1; flex-shrink: 0; }
+    .story-card-info { flex: 1; }
+    .story-card-info h2 { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .story-card-info p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .story-card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+    .tag {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      background: var(--border-light); color: var(--primary);
+      border-radius: 99px; padding: 4px 10px;
+    }
+    .tag.done { background: var(--correct-bg); color: var(--correct-text); }
+    .tag.in-progress { background: var(--keyword-bg); color: var(--keyword-chip); border-color: var(--keyword-bar-bd); }
+    .difficulty { display: flex; gap: 3px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .dot.filled { background: var(--primary); }
+    .arrow-icon { font-size: 20px; color: var(--muted-light); flex-shrink: 0; }
+
+    /* ════ STORY READING ════ */
+    .story-label {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .story-title { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 20px; }
+
+    .keywords-bar {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 20px; padding: 14px 16px;
+      background: var(--keyword-bar-bg); border: 1.5px solid var(--keyword-bar-bd);
+      border-radius: 10px; align-items: center;
+    }
+    .keywords-bar.hidden { display: none; }
+    .keywords-bar-label {
+      font-size: 12px; font-weight: 700; color: var(--keyword-text);
+      margin-right: 4px; white-space: nowrap;
+    }
+    .keyword-chip {
+      font-size: 13px; background: var(--keyword-bg); color: var(--keyword-chip);
+      border-radius: 99px; padding: 3px 10px; cursor: pointer;
+      border: 1.5px solid var(--keyword); font-weight: 600;
+      transition: background 0.1s; font-family: inherit;
+    }
+    .keyword-chip:hover { background: var(--keyword); }
+    .keyword-chip:focus { outline: 2px solid var(--keyword-text); }
+
+    .story-text {
+      font-size: 17px; line-height: 1.9; color: var(--text-body);
+      background: var(--surface-alt); border-left: 4px solid var(--primary);
+      border-radius: 10px; padding: 22px 24px; margin-bottom: 28px;
+    }
+    .story-text p { margin-bottom: 14px; }
+    .story-text p:last-child { margin-bottom: 0; }
+
+    .keyword-btn {
+      background: none; border: none;
+      border-bottom: 2px solid var(--keyword);
+      cursor: pointer; padding: 0 1px;
+      font-size: inherit; font-family: inherit; line-height: inherit;
+      font-weight: 600; color: var(--keyword-chip);
+      transition: background 0.1s;
+    }
+    .keyword-btn:hover { background: var(--keyword-bg); border-radius: 3px; }
+    .keyword-btn:focus { outline: 2px solid var(--keyword-text); border-radius: 3px; outline-offset: 1px; }
+
+    /* ── WORD POPUP ── */
+    .word-popup {
+      position: absolute;
+      background: var(--surface); border: 2px solid var(--primary);
+      border-radius: 14px; padding: 16px 18px;
+      max-width: 280px; z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    [data-theme="dark"] .word-popup { box-shadow: 0 8px 24px rgba(0,0,0,0.50); }
+    .word-popup.hidden { display: none; }
+    .popup-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 8px;
+    }
+    .popup-word { font-size: 20px; font-weight: 800; color: var(--text); }
+    .popup-close {
+      background: none; border: none; font-size: 20px;
+      color: var(--muted-light); cursor: pointer; padding: 0; line-height: 1;
+    }
+    .popup-close:hover { color: var(--text); }
+    .popup-translation { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .popup-example-label {
+      font-size: 11px; font-weight: 700; color: var(--muted-light);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;
+    }
+    .popup-example { font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.5; }
+
+    /* ════ QUESTIONS ════ */
+    .progress-bar-wrap {
+      background: var(--border-light); border-radius: 99px;
+      height: 8px; margin-bottom: 10px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: var(--primary); height: 100%;
+      border-radius: 99px; transition: width 0.4s ease;
+    }
+    .progress-label { font-size: 13px; color: var(--muted); margin-bottom: 20px; text-align: right; }
+
+    details.story-mini {
+      font-size: 14px; color: var(--muted); background: var(--surface-alt);
+      border-left: 3px solid var(--primary); border-radius: 8px;
+      padding: 12px 16px; margin-bottom: 22px; line-height: 1.75;
+    }
+    details.story-mini summary {
+      font-weight: 700; color: var(--primary); cursor: pointer;
+      font-size: 13px; list-style: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    details.story-mini summary::before { content: '▶'; font-size: 9px; transition: transform 0.2s; }
+    details.story-mini[open] summary::before { transform: rotate(90deg); }
+    details.story-mini[open] summary { margin-bottom: 12px; }
+    details.story-mini .mini-text p { margin-bottom: 10px; }
+    details.story-mini .mini-text p:last-child { margin-bottom: 0; }
+
+    .question-text { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 22px; line-height: 1.4; }
+
+    .options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+    .option-btn {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface-alt); border: 2px solid var(--border);
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 16px; color: var(--text); cursor: pointer;
+      text-align: left; font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      width: 100%;
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
+    .option-btn:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .option-btn .letter {
+      display: flex; align-items: center; justify-content: center;
+      min-width: 30px; height: 30px; border-radius: 50%;
+      background: var(--border); font-weight: 700; font-size: 13px;
+      color: var(--primary); flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .option-btn.correct { background: var(--correct-bg); border-color: var(--correct); }
+    .option-btn.correct .letter { background: var(--correct); color: var(--surface); }
+    .option-btn.wrong   { background: var(--wrong-bg); border-color: var(--wrong); }
+    .option-btn.wrong   .letter { background: var(--wrong); color: var(--surface); }
+    .option-btn:disabled { cursor: default; transform: none; }
+
+    .feedback-box {
+      border-radius: 12px; padding: 14px 18px;
+      margin-bottom: 20px; display: none;
+    }
+    .feedback-box.correct { background: var(--correct-bg); border: 1.5px solid var(--correct-border); display: block; }
+    .feedback-box.wrong   { background: var(--wrong-bg);   border: 1.5px solid var(--wrong-border);   display: block; }
+    .feedback-verdict { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .feedback-box.correct .feedback-verdict { color: var(--correct-text); }
+    .feedback-box.wrong   .feedback-verdict { color: var(--wrong-text); }
+    .feedback-explanation { font-size: 14px; color: var(--muted); line-height: 1.6; font-style: italic; }
+
+    /* ════ RESULTS ════ */
+    .results-icon  { font-size: 60px; text-align: center; margin-bottom: 12px; }
+    .results-title { font-size: 26px; font-weight: 800; color: var(--text); text-align: center; margin-bottom: 6px; }
+    .results-score { font-size: 18px; color: var(--muted); text-align: center; margin-bottom: 28px; }
+    .results-score span { color: var(--primary); font-weight: 700; }
+    .results-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .results-list li { padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
+    .results-list li.ok   { background: var(--correct-bg); color: var(--correct-text); }
+    .results-list li.fail { background: var(--wrong-bg);   color: var(--wrong-text); }
+    .results-list li .q-label { font-weight: 700; display: block; margin-bottom: 2px; }
+
+    /* ── SHARED BUTTONS ── */
+    .btn-primary {
+      display: block; width: 100%; background: var(--primary);
+      color: var(--surface); border: none; border-radius: 12px;
+      padding: 16px; font-size: 17px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-primary:focus { outline: 2px solid var(--primary-dark); outline-offset: 2px; }
+
+    .btn-secondary {
+      display: block; width: 100%; background: transparent;
+      color: var(--primary); border: 2px solid var(--primary);
+      border-radius: 12px; padding: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      margin-top: 12px; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--primary-bg); }
+    .btn-secondary:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    /* ════ LESSON STEP HEADER (Learn + Practice) ════ */
+    .lesson-step-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .lesson-step-progress {
+      font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 28px;
+    }
+
+    /* ════ LEARN STEP — FLASHCARD ════ */
+    .flash-card {
+      background: var(--surface-alt); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 36px 28px;
+      text-align: center; margin-bottom: 28px;
+    }
+    .flash-card-emoji   { font-size: 72px; line-height: 1; margin-bottom: 18px; }
+    .flash-card-word    { font-size: 30px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .flash-card-trans   { font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 18px; }
+    .flash-card-example {
+      font-size: 14px; color: var(--muted); font-style: italic; line-height: 1.6;
+      border-top: 1px solid var(--border-light); padding-top: 16px;
+    }
+    .flash-img { width: 160px; height: 160px; object-fit: cover; border-radius: 16px; margin-bottom: 18px; }
+
+    /* ════ PRACTICE STEP ════ */
+    .practice-prompt   { text-align: center; margin-bottom: 24px; }
+    .practice-emoji    { font-size: 80px; line-height: 1; margin-bottom: 12px; }
+    .practice-question { font-size: 15px; color: var(--muted); margin-bottom: 0; }
+
+    .practice-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+    .practice-option {
+      background: var(--surface-alt); border: 2px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+      font-size: 18px; font-weight: 700; color: var(--text);
+      cursor: pointer; text-align: center; font-family: inherit; width: 100%;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .practice-option:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
+    .practice-option:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .practice-option.correct { background: var(--correct-bg); border-color: var(--correct); color: var(--correct-text); }
+    .practice-option.wrong   { background: var(--wrong-bg);   border-color: var(--wrong);   color: var(--wrong-text); }
+    .practice-option:disabled { cursor: default; transform: none; }
+
+    /* ════ REVIEW SECTION (inside results) ════ */
+    .review-section {
+      margin-bottom: 24px; padding: 20px;
+      background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 14px;
+    }
+    .review-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    }
+    .review-word-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .review-word-row:last-child { border-bottom: none; }
+    .review-emoji     { font-size: 28px; flex-shrink: 0; }
+    .review-word-info { flex: 1; }
+    .review-word-nl   { font-size: 16px; font-weight: 700; color: var(--text); }
+    .review-word-en   { font-size: 13px; color: var(--primary); }
+
+    /* ════ STANDALONE FLASHCARD THEMES ════ */
+    .fc-themes-header { margin-bottom: 28px; }
+    .fc-themes-header h1 { font-size: 22px; font-weight: 800; color: var(--text); }
+
+    .fc-theme-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .fc-theme-card {
+      display: flex; align-items: center; gap: 18px;
+      border: 2px solid var(--border); border-radius: 16px;
+      padding: 20px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      background: var(--surface-alt); width: 100%; text-align: left;
+      font-family: inherit;
+    }
+    .fc-theme-card:hover { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-2px); }
+    .fc-theme-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .fc-theme-icon { font-size: 38px; flex-shrink: 0; }
+    .fc-theme-info h2 { font-size: 17px; font-weight: 800; color: var(--text); }
+    .fc-theme-info p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ════ STANDALONE FLASHCARD LEARN (FLIP CARD) ════ */
+    .fc-learn-header { margin-bottom: 20px; }
+    .fc-progress-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .fc-progress-text { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+
+    .flip-card {
+      width: 100%; height: 280px;
+      perspective: 800px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.45s ease;
+    }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card-front,
+    .flip-card-back {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 20px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 28px; text-align: center;
+      background: var(--surface-alt); border: 1.5px solid var(--border);
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+      background: var(--primary-bg); border-color: var(--primary-border);
+    }
+    .fc-front-emoji { font-size: 72px; line-height: 1; margin-bottom: 16px; }
+    .fc-front-hint  { font-size: 13px; color: var(--muted); font-style: italic; }
+    .fc-back-word   { font-size: 32px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .fc-back-trans  { font-size: 18px; font-weight: 600; color: var(--primary); }
+
+    .fc-next-btn-wrap { margin-top: 4px; }
+
+    /* ════ STANDALONE FLASHCARD QUIZ ════ */
+    .fc-quiz-header { margin-bottom: 24px; }
+    .fc-quiz-progress-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .fc-quiz-progress-text { font-size: 22px; font-weight: 800; color: var(--text); }
+
+    .fc-quiz-visual {
+      text-align: center; font-size: 80px; line-height: 1;
+      margin-bottom: 16px;
+    }
+    .fc-quiz-question { font-size: 15px; color: var(--muted); text-align: center; margin-bottom: 20px; }
+
+    .fc-quiz-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .fc-quiz-option {
+      background: var(--surface-alt); border: 2px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+      font-size: 18px; font-weight: 700; color: var(--text);
+      cursor: pointer; text-align: center; font-family: inherit; width: 100%;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .fc-quiz-option:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
+    .fc-quiz-option:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .fc-quiz-option.correct { background: var(--correct-bg); border-color: var(--correct); color: var(--correct-text); }
+    .fc-quiz-option.wrong   { background: var(--wrong-bg);   border-color: var(--wrong);   color: var(--wrong-text); }
+    .fc-quiz-option:disabled { cursor: default; transform: none; }
+
+    .fc-quiz-result { text-align: center; padding: 32px 0; display: none; }
+    .fc-quiz-result.visible { display: block; }
+    .fc-quiz-result-icon  { font-size: 60px; margin-bottom: 16px; }
+    .fc-quiz-result-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .fc-quiz-result-score { font-size: 17px; color: var(--muted); margin-bottom: 28px; }
+    .fc-quiz-result-score span { color: var(--primary); font-weight: 700; }
+
+    /* ════ BEGINNER ROUTE ════ */
+    .bl-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      background: #fff3c4; color: #8a6300;
+      border: 1.5px solid var(--keyword); border-radius: 99px;
+      padding: 3px 10px; margin-bottom: 10px;
+    }
+    [data-theme="dark"] .bl-badge { background: #2b2200; color: var(--keyword-chip); }
+
+    .bl-intro-icon  { font-size: 64px; text-align: center; margin-bottom: 20px; }
+    .bl-intro-title { font-size: 26px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .bl-intro-desc  { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+    .bl-intro-words { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+    .bl-intro-word  {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: var(--surface-alt);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 15px;
+    }
+    .bl-intro-word-nl { font-weight: 700; color: var(--text); }
+    .bl-intro-word-en { color: var(--muted); font-size: 13px; margin-left: 4px; }
+
+    .bl-step-bar {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .bl-step-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 24px; }
+
+    /* Learn card (reuses .flash-card but with audio placeholder) */
+    .bl-audio-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--primary-bg); border: 1.5px solid var(--primary-border);
+      border-radius: 99px; padding: 8px 18px;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+      cursor: pointer; margin-top: 14px; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .bl-audio-btn:hover { background: var(--primary-border); }
+    .bl-audio-note {
+      display: inline-block; font-size: 12px; color: var(--muted);
+      margin-top: 14px;
+    }
+
+    /* Listen and tap — 2×2 grid */
+    .bl-listen-prompt {
+      text-align: center; margin-bottom: 22px;
+    }
+    .bl-listen-hint { font-size: 13px; color: var(--muted); }
+    .bl-listen-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      margin-bottom: 20px;
+    }
+    .bl-listen-opt {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 20px 12px;
+      background: var(--surface-alt); border: 2px solid var(--border);
+      border-radius: 16px; cursor: pointer; font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+    }
+    .bl-listen-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
+    .bl-listen-opt:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .bl-listen-opt .bl-opt-emoji { font-size: 44px; line-height: 1; }
+    .bl-listen-opt.correct { background: var(--correct-bg); border-color: var(--correct); }
+    .bl-listen-opt.wrong   { background: var(--wrong-bg);   border-color: var(--wrong); }
+    .bl-listen-opt:disabled { cursor: default; transform: none; }
+
+    /* Sentences */
+    .bl-sentence-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .bl-sentence-card {
+      padding: 18px 20px; background: var(--surface-alt);
+      border: 1.5px solid var(--border); border-radius: 14px;
+    }
+    .bl-sentence-nl { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .bl-sentence-en { font-size: 14px; color: var(--muted); font-style: italic; }
+
+    /* Dialogue */
+    .bl-dialog-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .bl-dialog-line {
+      padding: 14px 18px; border-radius: 14px;
+      background: var(--surface-alt); border: 1.5px solid var(--border);
+    }
+    .bl-dialog-speaker { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+    .bl-dialog-nl { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .bl-dialog-en { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* Review grid */
+    .bl-review-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .bl-review-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 16px; background: var(--surface-alt);
+      border: 1.5px solid var(--border); border-radius: 12px;
+    }
+    .bl-review-emoji { font-size: 32px; flex-shrink: 0; }
+    .bl-review-img   { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .bl-review-info  { flex: 1; }
+    .bl-review-nl    { font-size: 17px; font-weight: 700; color: var(--text); }
+    .bl-review-en    { font-size: 13px; color: var(--muted); }
+
+    /* Sentence builder */
+    .sb-prompt-en { background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 15px; font-style: italic; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .sb-tray-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+    .sb-tray { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; min-height: 46px; padding: 8px 10px; background: var(--primary-bg); border: 2px dashed var(--primary-border); border-radius: 12px; }
+    .sb-tray-chip { background: var(--primary-bg); border: 1.5px solid var(--primary); border-radius: 8px; padding: 6px 12px; font-size: 15px; font-weight: 600; color: var(--primary); font-family: inherit; }
+    .sb-tray-chip.correct { background: var(--correct-bg); border-color: var(--correct); color: var(--correct-text); }
+    .sb-tray-chip.wrong   { background: var(--wrong-bg);   border-color: var(--wrong-border); color: var(--wrong-text); }
+    .sb-undo-btn { background: none; border: none; font-size: 12px; color: var(--muted); cursor: pointer; padding: 4px 6px; font-family: inherit; white-space: nowrap; align-self: center; }
+    .sb-undo-btn:hover { color: var(--text); }
+    .sb-chip-pool { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .sb-chip { background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit; transition: background 0.12s, border-color 0.12s; }
+    .sb-chip:hover:not(:disabled) { background: var(--primary-bg); border-color: var(--primary-border); }
+    .sb-chip:disabled { opacity: 0.3; cursor: default; }
+    .sb-feedback { margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+    .sb-feedback.correct { background: var(--correct-bg); color: var(--correct-text); border: 1.5px solid var(--correct-border); }
+    .sb-feedback.wrong   { background: var(--wrong-bg);   color: var(--wrong-text);   border: 1.5px solid var(--wrong-border); }
+
+    @media (max-width: 500px) {
+      body { padding: 16px 12px; }
+      .card { padding: 24px 20px; }
+      .lang-options { flex-direction: column; }
+      .lang-option-btn { flex-direction: row; padding: 18px 16px; }
+      .lang-flag { font-size: 32px; }
+      .flip-card { height: 240px; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- CARD TOPBAR: lang indicator + theme toggle -->
+  <div class="card-topbar">
+    <button class="lang-indicator hidden" id="lang-indicator" onclick="goToHome()">
+      <span id="ui-indicator-flag"></span>
+      <span id="ui-indicator-label"></span>
+    </button>
+    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+  </div>
+
+  <!-- WORD POPUP -->
+  <div id="word-popup" class="word-popup hidden" role="dialog" aria-label="Word explanation">
+    <div class="popup-header">
+      <span class="popup-word" id="popup-word"></span>
+      <button class="popup-close" onclick="closeWordPopup()" aria-label="Close">×</button>
+    </div>
+    <div class="popup-translation" id="popup-translation"></div>
+    <div class="popup-example-label" id="popup-example-label"></div>
+    <div class="popup-example" id="popup-example"></div>
+  </div>
+
+  <!-- ════ SCREEN: HOME ════ -->
+  <div id="screen-home" class="screen active">
+    <div class="home-wrapper">
+      <div class="home-app-icon">📖</div>
+      <h1 class="home-title" id="ui-home-title">Language Learning</h1>
+      <p class="home-subtitle" id="ui-home-subtitle">Learn Dutch or English with short stories and flashcards.</p>
+      <div id="home-progress-panel" class="home-progress-panel" style="display:none">
+        <div class="home-prog-stats">
+          <div class="home-prog-stat">
+            <span class="home-prog-number" id="hp-lessons">0</span>
+            <span class="home-prog-label" id="ui-hp-lessons">lessons done</span>
+          </div>
+          <div class="home-prog-stat">
+            <span class="home-prog-number" id="hp-words">0</span>
+            <span class="home-prog-label" id="ui-hp-words">words learned</span>
+          </div>
+        </div>
+        <button class="btn-secondary" id="hp-continue-btn" style="display:none" onclick="continueLesson()" id="ui-hp-continue">Continue last lesson →</button>
+      </div>
+      <div class="home-actions">
+        <button class="btn-primary" id="ui-home-start" onclick="showScreen('screen-practice-select')">Start practising</button>
+        <button class="btn-secondary" id="ui-home-about" onclick="showScreen('screen-about')">About &amp; Contact</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: INTERFACE LANGUAGE (legacy, kept for compat) ════ -->
+  <div id="screen-ui-lang" class="screen">
+    <div class="lang-screen-header">
+      <h1>Choose your language<br><span style="font-size:18px;font-weight:600;color:var(--muted)">Kies je taal</span></h1>
+      <p>For buttons and instructions<br><span style="font-size:13px;color:var(--muted)">Voor knoppen en uitleg</span></p>
+    </div>
+    <div class="lang-options">
+      <button class="lang-option-btn" onclick="selectUiLang('en')">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-name">English</span>
+      </button>
+      <button class="lang-option-btn" onclick="selectUiLang('nl')">
+        <span class="lang-flag">🇳🇱</span>
+        <span class="lang-name">Nederlands</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: LEARNING LANGUAGE (legacy) ════ -->
+  <div id="screen-learn-lang" class="screen">
+    <div class="lang-screen-header">
+      <h1 id="ui-learn-title"></h1>
+      <p id="ui-learn-subtitle"></p>
+    </div>
+    <div class="lang-options">
+      <button class="lang-option-btn" onclick="selectLearnLang('en')">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-name">English</span>
+      </button>
+      <button class="lang-option-btn" onclick="selectLearnLang('nl')">
+        <span class="lang-flag">🇳🇱</span>
+        <span class="lang-name">Nederlands</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: PRACTICE SELECT ════ -->
+  <div id="screen-practice-select" class="screen">
+    <button class="back-link" onclick="showScreen('screen-home')" id="ui-ps-back">← Home</button>
+    <div class="practice-select-header">
+      <h1 id="ui-ps-title">What level are you?</h1>
+    </div>
+    <div class="practice-option-list">
+      <button class="cefr-level-btn" onclick="startBeginnerRoute('A0')">
+        <span class="cefr-level-icon">🌱</span>
+        <div class="cefr-level-body">
+          <div class="cefr-level-name" id="ui-ps-a0">I am new to Dutch</div>
+          <div class="cefr-level-sub"  id="ui-ps-a0-sub">Start from zero — beginners (A0)</div>
+        </div>
+        <span class="cefr-level-tag cefr-tag-a0">A0</span>
+      </button>
+      <button class="cefr-level-btn" onclick="startBeginnerRoute('A1')">
+        <span class="cefr-level-icon">📗</span>
+        <div class="cefr-level-body">
+          <div class="cefr-level-name" id="ui-ps-a1">I am familiar with Dutch</div>
+          <div class="cefr-level-sub"  id="ui-ps-a1-sub">Build your vocabulary (A1)</div>
+        </div>
+        <span class="cefr-level-tag cefr-tag-a1">A1</span>
+      </button>
+      <button class="cefr-level-btn" onclick="selectPractice('nl')">
+        <span class="cefr-level-icon">🇳🇱</span>
+        <div class="cefr-level-body">
+          <div class="cefr-level-name" id="ui-ps-a2">I am comfortable with Dutch</div>
+          <div class="cefr-level-sub"  id="ui-ps-a2-sub">Practice with short stories (A2)</div>
+        </div>
+        <span class="cefr-level-tag cefr-tag-a2">A2</span>
+      </button>
+      <button class="cefr-level-btn" onclick="showMoreOptions()">
+        <span class="cefr-level-icon">📚</span>
+        <div class="cefr-level-body">
+          <div class="cefr-level-name" id="ui-ps-more">More</div>
+          <div class="cefr-level-sub"  id="ui-ps-more-sub">Flashcards · English practice (A2+)</div>
+        </div>
+        <span class="cefr-level-tag cefr-tag-more">A2+</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: ABOUT ════ -->
+  <div id="screen-about" class="screen">
+    <button class="back-link" onclick="showScreen('screen-home')" id="ui-about-back">← Home</button>
+    <div class="about-header">
+      <h1 id="ui-about-title">About &amp; Contact</h1>
+    </div>
+    <div class="about-section">
+      <p class="about-label" id="ui-about-name-label">Name</p>
+      <p class="about-value">[PLACEHOLDER: jouw naam]</p>
+    </div>
+    <div class="about-section">
+      <p class="about-label" id="ui-about-contact-label">Contact</p>
+      <p class="about-value">[PLACEHOLDER: e-mail of telefoonnummer]</p>
+    </div>
+    <div class="about-section">
+      <p class="about-label">LinkedIn</p>
+      <p class="about-value">
+        <a class="about-link" href="[PLACEHOLDER_LINKEDIN_URL]" target="_blank" rel="noopener">
+          [PLACEHOLDER: linkedin.com/in/jouw-profiel]
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: STORY SELECTION ════ -->
+  <div id="screen-select" class="screen">
+    <button class="back-link" onclick="showScreen('screen-practice-select')" id="ui-select-back">← Back</button>
+    <div class="select-header">
+      <p class="label-sm" id="ui-lang-label"></p>
+      <h1 id="ui-choose-story"></h1>
+    </div>
+    <div class="story-cards" id="story-cards-wrap"></div>
+  </div>
+
+  <!-- ════ SCREEN: LEARN STEP ════ -->
+  <div id="screen-word-intro" class="screen">
+    <button class="back-link" id="ui-learn-back" onclick="showScreen('screen-select')"></button>
+    <p class="lesson-step-label" id="ui-learn-step-label"></p>
+    <p class="lesson-step-progress" id="learn-progress"></p>
+    <div class="flash-card" id="learn-flash-card">
+      <div class="flash-card-emoji" id="learn-emoji"></div>
+      <div class="flash-card-word"  id="learn-word"></div>
+      <div class="flash-card-trans" id="learn-trans"></div>
+      <div class="flash-card-example" id="learn-example"></div>
+    </div>
+    <button class="btn-primary" id="ui-learn-next-btn" onclick="nextLearnCard()"></button>
+  </div>
+
+  <!-- ════ SCREEN: PRACTICE STEP ════ -->
+  <div id="screen-practice" class="screen">
+    <button class="back-link" id="ui-practice-back" onclick="showScreen('screen-select')"></button>
+    <p class="lesson-step-label" id="ui-practice-step-label"></p>
+    <p class="lesson-step-progress" id="practice-progress"></p>
+    <div class="practice-prompt">
+      <div class="practice-emoji"   id="practice-emoji"></div>
+      <p  class="practice-question" id="ui-practice-question"></p>
+    </div>
+    <div class="practice-options" id="practice-options-wrap"></div>
+    <div class="feedback-box" id="practice-feedback-box">
+      <div class="feedback-verdict" id="practice-verdict"></div>
+    </div>
+    <button class="btn-primary" id="ui-practice-next-btn" style="display:none;" onclick="nextPracticeItem()"></button>
+  </div>
+
+  <!-- ════ SCREEN: STORY READING ════ -->
+  <div id="screen-story" class="screen">
+    <button class="back-link" id="ui-back-link" onclick="showScreen('screen-select')"></button>
+    <p class="story-label" id="ui-read-story"></p>
+    <h1 class="story-title" id="story-title"></h1>
+    <div class="keywords-bar hidden" id="keywords-bar">
+      <span class="keywords-bar-label" id="ui-keywords-label"></span>
+      <span id="keywords-chips-wrap"></span>
+    </div>
+    <div class="story-text" id="story-body"></div>
+    <button class="btn-primary" id="ui-start-btn" onclick="startQuestions()"></button>
+  </div>
+
+  <!-- ════ SCREEN: QUESTIONS ════ -->
+  <div id="screen-question" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <p class="progress-label" id="progress-label"></p>
+    <details class="story-mini" id="story-mini-wrap">
+      <summary><span id="ui-reread"></span></summary>
+      <div class="mini-text" id="story-mini-text"></div>
+    </details>
+    <p class="question-text" id="question-text"></p>
+    <div class="options" id="options-wrap"></div>
+    <div class="feedback-box" id="feedback-box">
+      <div class="feedback-verdict" id="feedback-verdict"></div>
+      <div class="feedback-explanation" id="feedback-explanation"></div>
+    </div>
+    <button class="btn-primary" id="next-btn" style="display:none;" onclick="nextQuestion()"></button>
+  </div>
+
+  <!-- ════ SCREEN: RESULTS ════ -->
+  <div id="screen-results" class="screen">
+    <div class="results-icon" id="results-icon"></div>
+    <h2 class="results-title" id="results-title"></h2>
+    <p class="results-score" id="results-score"></p>
+    <ul class="results-list" id="results-list"></ul>
+    <div class="review-section" id="review-section">
+      <p class="review-label" id="ui-review-label"></p>
+      <div id="review-words-wrap"></div>
+    </div>
+    <button class="btn-primary"   id="ui-try-again"      onclick="startQuestions()"></button>
+    <button class="btn-secondary" id="ui-reread-story"   onclick="showScreen('screen-story')"></button>
+    <button class="btn-secondary" id="ui-choose-another" onclick="showScreen('screen-select')"></button>
+  </div>
+
+  <!-- ════ SCREEN: FLASHCARD THEMES ════ -->
+  <div id="screen-flashcard-themes" class="screen">
+    <button class="back-link" onclick="showScreen('screen-practice-select')" id="ui-fc-themes-back">← Back</button>
+    <div class="fc-themes-header">
+      <h1 id="ui-fc-themes-title">Choose a theme</h1>
+    </div>
+    <div class="fc-theme-list" id="fc-theme-list"></div>
+  </div>
+
+  <!-- ════ SCREEN: FLASHCARD LEARN ════ -->
+  <div id="screen-flashcard-learn" class="screen">
+    <button class="back-link" onclick="showScreen('screen-flashcard-themes')" id="ui-fc-learn-back">← Themes</button>
+    <div class="fc-learn-header">
+      <p class="fc-progress-label" id="ui-fc-learn-label">Learn</p>
+      <p class="fc-progress-text" id="fc-learn-progress">Card 1 of 5</p>
+    </div>
+    <div class="flip-card" id="fc-flip-card" onclick="flipCard()" role="button" tabindex="0" aria-label="Tap to flip card">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="fc-front-emoji" id="fc-front-visual">❓</div>
+          <p class="fc-front-hint" id="ui-fc-flip-hint">Tap to reveal →</p>
+        </div>
+        <div class="flip-card-back">
+          <div class="fc-back-word"  id="fc-back-word"></div>
+          <div class="fc-back-trans" id="fc-back-trans"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-next-btn-wrap">
+      <button class="btn-primary" id="ui-fc-next-btn" style="display:none;" onclick="nextFlashcard()">Next card →</button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: FLASHCARD QUIZ ════ -->
+  <div id="screen-flashcard-quiz" class="screen">
+    <button class="back-link" onclick="showScreen('screen-flashcard-themes')" id="ui-fc-quiz-back">← Themes</button>
+
+    <!-- Question area -->
+    <div id="fc-quiz-question-area">
+      <div class="fc-quiz-header">
+        <p class="fc-quiz-progress-label" id="ui-fc-quiz-label">Practice</p>
+        <p class="fc-quiz-progress-text"  id="fc-quiz-progress">Question 1 of 5</p>
+      </div>
+      <div class="fc-quiz-visual" id="fc-quiz-visual">❓</div>
+      <p class="fc-quiz-question" id="ui-fc-quiz-question">Which word matches the picture?</p>
+      <div class="fc-quiz-options" id="fc-quiz-options"></div>
+      <div class="feedback-box" id="fc-quiz-feedback">
+        <div class="feedback-verdict" id="fc-quiz-verdict"></div>
+      </div>
+      <button class="btn-primary" id="ui-fc-quiz-next" style="display:none;" onclick="nextFlashcardQuizItem()">Next →</button>
+    </div>
+
+    <!-- Result area -->
+    <div class="fc-quiz-result" id="fc-quiz-result">
+      <div class="fc-quiz-result-icon" id="fc-quiz-result-icon">🏆</div>
+      <h2 class="fc-quiz-result-title" id="ui-fc-quiz-done">Well done!</h2>
+      <p class="fc-quiz-result-score" id="fc-quiz-result-score"></p>
+      <button class="btn-primary"   id="ui-fc-quiz-retry" onclick="retryFlashcardQuiz()">Try again</button>
+      <button class="btn-secondary" id="ui-fc-quiz-themes" onclick="showScreen('screen-flashcard-themes')">← Choose theme</button>
+    </div>
+  </div>
+
+
+  <!-- ════ SCREEN: BEGINNER THEMES ════ -->
+  <div id="screen-beginner-themes" class="screen">
+    <button class="back-link" onclick="showScreen('screen-practice-select')" id="ui-bl-themes-back">← Back</button>
+    <div class="fc-themes-header">
+      <span class="bl-badge" id="bl-level-badge">Dutch for Beginners · A0</span>
+      <h1 id="ui-bl-themes-title">Choose a lesson</h1>
+    </div>
+    <div class="fc-theme-list" id="bl-theme-list"></div>
+  </div>
+
+  <!-- ════ SCREEN: BEGINNER LESSON ════ -->
+  <div id="screen-beginner-lesson" class="screen">
+    <button class="back-link" id="ui-bl-back" onclick="showScreen('screen-beginner-themes')">← Lessons</button>
+    <p class="bl-step-bar"   id="bl-step-bar"></p>
+    <p class="bl-step-title" id="bl-step-title"></p>
+    <div id="bl-content"></div>
+  </div>
+
+</div><!-- .card -->
+
+<script>
+  // ══════════════════════════════════════════
+  //  THEME — initialise before first paint
+  // ══════════════════════════════════════════
+  (function loadTheme() {
+    try {
+      const t = localStorage.getItem("lapp_theme");
+      if (t) document.documentElement.setAttribute("data-theme", t);
+    } catch {}
+    updateThemeIcon();
+  })();
+
+  function updateThemeIcon() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const btn = document.getElementById("theme-toggle-btn");
+    if (btn) { btn.textContent = isDark ? "☀️" : "🌙"; btn.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode"); }
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const next = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("lapp_theme", next); } catch {}
+    updateThemeIcon();
+  }
+
+  // ══════════════════════════════════════════
+  //  TEXT-TO-SPEECH (Dutch)
+  // ══════════════════════════════════════════
+  const TTS_SUPPORTED = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  function speakDutch(text) {
+    if (!TTS_SUPPORTED) return;
+    window.speechSynthesis.cancel();
+    const utt  = new SpeechSynthesisUtterance(text);
+    utt.lang   = "nl-NL";
+    utt.rate   = 0.85;
+    utt.pitch  = 1.0;
+    window.speechSynthesis.speak(utt);
+  }
+
+  // ══════════════════════════════════════════
+  //  I18N
+  // ══════════════════════════════════════════
+  const i18n = {
+    en: {
+      // Home
+      homeTitle:           "Language Learning",
+      homeSubtitle:        "Learn Dutch or English with short stories and flashcards.",
+      homeStart:           "Start practising",
+      homeAbout:           "About & Contact",
+      // Practice select
+      psTitle:             "What do you want to practise?",
+      psBack:              "← Home",
+      psNL:                "Practise Dutch",
+      psNLSub:             "Stories & words in Dutch",
+      psEN:                "Practise English",
+      psENSub:             "Stories & words in English",
+      psFC:                "Word flashcards",
+      psFCSub:             "Learn words with flip cards",
+      psA0:                "I am new to Dutch",
+      psA0Sub:             "Start from zero — beginners (A0)",
+      psA1:                "I am familiar with Dutch",
+      psA1Sub:             "Build your vocabulary (A1)",
+      psA2:                "I am comfortable with Dutch",
+      psA2Sub:             "Practice with short stories (A2)",
+      psMore:              "More",
+      psMoreSub:           "Flashcards · English practice (A2+)",
+      blLevelA0:           "Dutch for Beginners · A0",
+      blLevelA1:           "Dutch Foundation · A1",
+      // About
+      aboutTitle:          "About & Contact",
+      aboutBack:           "← Home",
+      aboutNameLabel:      "Name",
+      aboutContactLabel:   "Contact",
+      // Story selection
+      selectBack:          "← Back",
+      learnTitle:          "What do you want to practise?",
+      learnSubtitle:       "Choose the language you want to learn.",
+      langLabel:           "Stories",
+      chooseStory:         "Choose a story",
+      // Story reading
+      readStory:           "Read the story",
+      allStories:          "← All stories",
+      startQuestions:      "I'm ready — start the questions!",
+      reread:              "Re-read the story",
+      keywordsLabel:       "Key words:",
+      // Questions
+      questionOf:          (x, y) => `Question ${x} of ${y}`,
+      correct:             "Correct!",
+      wrong:               (ans) => `Not quite. The answer was: "${ans}"`,
+      nextQuestion:        "Next question →",
+      seeResults:          "See my results!",
+      // Results
+      perfectScore:        "Perfect score!",
+      greatJob:            "Great job!",
+      goodEffort:          "Good effort!",
+      keepPractising:      "Keep practising!",
+      gotCorrect:          (x, y) => `You got <span>${x} out of ${y}</span> correct.`,
+      tryAgain:            "Try again",
+      rereadStory:         "Re-read the story",
+      chooseAnother:       "Choose another story",
+      yourAnswer:          "Your answer:",
+      correctAnswer:       "Correct:",
+      questionsTag:        "questions",
+      doneTag:             "Done",
+      exampleLabel:        "Example:",
+      indicatorLabel:      "Learning",
+      // Learn step
+      learnStepLabel:      "Step 1 · Learn words",
+      cardOf:              (x, y) => `Word ${x} of ${y}`,
+      nextWord:            "Next word →",
+      startPractice:       "Start practice →",
+      // Practice step
+      practiceStepLabel:   "Step 2 · Practice",
+      practiceQuestion:    "Which word matches this picture?",
+      practiceCorrect:     "Correct!",
+      practiceWrong:       "Not quite — look at the right word.",
+      startReading:        "Start reading →",
+      // Review
+      wordsLearned:        "Words you learned",
+      // Flashcard themes
+      fcThemesTitle:       "Choose a theme",
+      fcThemesBack:        "← Back",
+      // Flashcard learn
+      fcLearnLabel:        "Learn",
+      fcLearnBack:         "← Themes",
+      fcFlipHint:          "Tap to reveal →",
+      fcNextCard:          "Next card →",
+      fcCardOf:            (x, y) => `Card ${x} of ${y}`,
+      // Flashcard quiz
+      fcQuizLabel:         "Practice",
+      fcQuizBack:          "← Themes",
+      fcQuizQuestion:      "Which word matches the picture?",
+      fcQuizNext:          "Next →",
+      fcQuizDone:          "Well done!",
+      fcQuizRetry:         "Try again",
+      fcQuizThemes:        "← Choose theme",
+      fcQuizScore:         (x, y) => `You got <span>${x} of ${y}</span> correct!`,
+      // Beginner route
+      blBtn:          "I know no Dutch yet",
+      blBtnSub:       "Start from zero — beginner lessons",
+      blThemesTitle:  "Choose a lesson",
+      blThemesBack:   "← Back",
+      blIntroBtn:     "Start lesson →",
+      blStepOf:       (s, t, n) => `Step ${s} of ${t} · ${n}`,
+      blLearnName:    "Learn words",
+      blListenName:   "Listen and tap",
+      blPictureName:  "Picture to word",
+      blSentName:     "Read sentences",
+      blDialogName:   "Mini-dialogue",
+      blReviewName:   "Review",
+      blNext:         "Next →",
+      blNextStep:     "Next step →",
+      blAgain:        "Practice again",
+      blFinish:       "← Choose another lesson",
+      blAudioHear:        "🔊 Hear word",
+      blAudioNoSupport:   "🔊 Audio not available in this browser",
+      blListenQ:          "Which picture shows this word?",
+      blPictureQ:         "Which word matches the picture?",
+      blDialogTitle:      "Read the dialogue",
+      blReviewTitle:      "Words from this lesson",
+      blCorrect:          "Correct!",
+      blWrong:            "Not quite — look at the right answer.",
+      blWordOf:           (x, y) => `Word ${x} of ${y}`,
+      blQOf:              (x, y) => `Question ${x} of ${y}`,
+      blSentBuilderName:  "Build a sentence",
+      blSentBuilderPrompt:"Tap the Dutch words in the correct order:",
+      blSentBuilderUndo:  "↩ Undo",
+      blSentBuilderCheck: "Check →",
+      blSentBuilderRight: "✓ Correct!",
+      hpLessonsDone:  "lessons done",
+      hpWordsLearned: "words learned",
+      hpContinue:     "Continue last lesson →",
+    },
+    nl: {
+      // Home
+      homeTitle:           "Taal Leren",
+      homeSubtitle:        "Leer Nederlands of Engels met korte verhalen en woordkaarten.",
+      homeStart:           "Begin met oefenen",
+      homeAbout:           "Over / Contact",
+      // Practice select
+      psTitle:             "Wat wil je oefenen?",
+      psBack:              "← Home",
+      psNL:                "Nederlands oefenen",
+      psNLSub:             "Verhalen en woorden in het Nederlands",
+      psEN:                "Engels oefenen",
+      psENSub:             "Verhalen en woorden in het Engels",
+      psFC:                "Woordkaarten",
+      psFCSub:             "Leer woorden met omdraaikaarten",
+      psA0:                "Ik ben nieuw in het Nederlands",
+      psA0Sub:             "Begin bij het begin — beginners (A0)",
+      psA1:                "Ik ken wat Nederlands",
+      psA1Sub:             "Bouw je woordenschat (A1)",
+      psA2:                "Ik ben vertrouwd met het Nederlands",
+      psA2Sub:             "Oefen met korte verhalen (A2)",
+      psMore:              "Meer",
+      psMoreSub:           "Woordkaarten · Engels oefenen (A2+)",
+      blLevelA0:           "Nederlands voor beginners · A0",
+      blLevelA1:           "Nederlands fundament · A1",
+      // About
+      aboutTitle:          "Over / Contact",
+      aboutBack:           "← Home",
+      aboutNameLabel:      "Naam",
+      aboutContactLabel:   "Contact",
+      // Story selection
+      selectBack:          "← Terug",
+      learnTitle:          "Wat wil je oefenen?",
+      learnSubtitle:       "Kies de taal die je wilt leren.",
+      langLabel:           "Verhalen",
+      chooseStory:         "Kies een verhaal",
+      // Story reading
+      readStory:           "Lees het verhaal",
+      allStories:          "← Alle verhalen",
+      startQuestions:      "Ik ben klaar — start de vragen!",
+      reread:              "Herlees het verhaal",
+      keywordsLabel:       "Sleutelwoorden:",
+      // Questions
+      questionOf:          (x, y) => `Vraag ${x} van ${y}`,
+      correct:             "Correct!",
+      wrong:               (ans) => `Niet helemaal. Het antwoord was: "${ans}"`,
+      nextQuestion:        "Volgende vraag →",
+      seeResults:          "Bekijk mijn resultaten!",
+      // Results
+      perfectScore:        "Perfecte score!",
+      greatJob:            "Geweldig gedaan!",
+      goodEffort:          "Goed geprobeerd!",
+      keepPractising:      "Blijf oefenen!",
+      gotCorrect:          (x, y) => `Je had <span>${x} van de ${y}</span> goed.`,
+      tryAgain:            "Opnieuw proberen",
+      rereadStory:         "Herlees het verhaal",
+      chooseAnother:       "Kies een ander verhaal",
+      yourAnswer:          "Jouw antwoord:",
+      correctAnswer:       "Juist:",
+      questionsTag:        "vragen",
+      doneTag:             "Klaar",
+      exampleLabel:        "Voorbeeld:",
+      indicatorLabel:      "Je leert",
+      // Learn step
+      learnStepLabel:      "Stap 1 · Leer woorden",
+      cardOf:              (x, y) => `Woord ${x} van ${y}`,
+      nextWord:            "Volgend woord →",
+      startPractice:       "Begin met oefenen →",
+      // Practice step
+      practiceStepLabel:   "Stap 2 · Oefenen",
+      practiceQuestion:    "Welk woord hoort bij deze afbeelding?",
+      practiceCorrect:     "Correct!",
+      practiceWrong:       "Niet helemaal — kijk naar het juiste woord.",
+      startReading:        "Begin met lezen →",
+      // Review
+      wordsLearned:        "Woorden die je hebt geleerd",
+      // Flashcard themes
+      fcThemesTitle:       "Kies een thema",
+      fcThemesBack:        "← Terug",
+      // Flashcard learn
+      fcLearnLabel:        "Leren",
+      fcLearnBack:         "← Thema's",
+      fcFlipHint:          "Tik om te onthullen →",
+      fcNextCard:          "Volgende kaart →",
+      fcCardOf:            (x, y) => `Kaart ${x} van ${y}`,
+      // Flashcard quiz
+      fcQuizLabel:         "Oefenen",
+      fcQuizBack:          "← Thema's",
+      fcQuizQuestion:      "Welk woord hoort bij deze afbeelding?",
+      fcQuizNext:          "Volgende →",
+      fcQuizDone:          "Goed gedaan!",
+      fcQuizRetry:         "Opnieuw proberen",
+      fcQuizThemes:        "← Kies thema",
+      fcQuizScore:         (x, y) => `Je had <span>${x} van de ${y}</span> goed!`,
+      // Beginner route (NL UI)
+      blBtn:          "Ik ken nog geen Nederlands",
+      blBtnSub:       "Begin bij het begin — beginnerslessen",
+      blThemesTitle:  "Kies een les",
+      blThemesBack:   "← Terug",
+      blIntroBtn:     "Start les →",
+      blStepOf:       (s, t, n) => `Stap ${s} van ${t} · ${n}`,
+      blLearnName:    "Leer woorden",
+      blListenName:   "Luister en tik",
+      blPictureName:  "Afbeelding naar woord",
+      blSentName:     "Lees zinnen",
+      blDialogName:   "Mini-dialoog",
+      blReviewName:   "Herhaling",
+      blNext:         "Volgende →",
+      blNextStep:     "Volgende stap →",
+      blAgain:        "Opnieuw oefenen",
+      blFinish:       "← Kies een andere les",
+      blAudioHear:        "🔊 Hoor het woord",
+      blAudioNoSupport:   "🔊 Audio niet beschikbaar in deze browser",
+      blListenQ:          "Welke afbeelding hoort bij dit woord?",
+      blPictureQ:         "Welk woord hoort bij deze afbeelding?",
+      blDialogTitle:      "Lees de dialoog",
+      blReviewTitle:      "Woorden uit deze les",
+      blCorrect:          "Correct!",
+      blWrong:            "Niet helemaal — kijk naar het juiste antwoord.",
+      blWordOf:           (x, y) => `Woord ${x} van ${y}`,
+      blQOf:              (x, y) => `Vraag ${x} van ${y}`,
+      blSentBuilderName:  "Bouw een zin",
+      blSentBuilderPrompt:"Tik de Nederlandse woorden in de juiste volgorde:",
+      blSentBuilderUndo:  "↩ Ongedaan",
+      blSentBuilderCheck: "Controleer →",
+      blSentBuilderRight: "✓ Correct!",
+      hpLessonsDone:  "lessen gedaan",
+      hpWordsLearned: "woorden geleerd",
+      hpContinue:     "Ga verder met laatste les →",
+    }
+  };
+
+  // ══════════════════════════════════════════
+  //  BEGINNER ROUTE DATA (Pre-A1 / A0)
+  // ══════════════════════════════════════════
+  const beginnerThemes = [
+    {
+      id: "greetings",
+      level: "A0",
+      emoji: "👋",
+      title:    { en: "Greetings",         nl: "Begroetingen" },
+      subtitle: { en: "5 essential phrases", nl: "5 essentiële uitdrukkingen" },
+      intro:    { en: "In this lesson you will learn 5 basic Dutch greetings. You will use these every day — when you arrive somewhere, say thank you, or say goodbye." },
+      words: [
+        { nl: "Hallo",        en: "Hello",          emoji: "👋",  image: null, audio: null },
+        { nl: "Goedemorgen",  en: "Good morning",   emoji: "🌅",  image: null, audio: null },
+        { nl: "Dank je",      en: "Thank you",      emoji: "🙏",  image: null, audio: null },
+        { nl: "Alsjeblieft",  en: "Please / Here you go", emoji: "🤲", image: null, audio: null },
+        { nl: "Tot ziens",    en: "Goodbye",        emoji: "👋🏼", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Hallo!",       en: "Hello!" },
+        { nl: "Dank je.",     en: "Thank you." },
+        { nl: "Tot ziens!",   en: "Goodbye!" },
+      ],
+      dialogue: {
+        context: { en: "A first meeting" },
+        lines: [
+          { speaker: "Anna", nl: "Hallo! Ik ben Anna.",         en: "Hello! I am Anna." },
+          { speaker: "Max",  nl: "Hallo! Ik ben Max.",          en: "Hello! I am Max." },
+          { speaker: "Anna", nl: "Goedemorgen, Max.",           en: "Good morning, Max." },
+          { speaker: "Max",  nl: "Goedemorgen! Alsjeblieft.",   en: "Good morning! Here you go." },
+          { speaker: "Anna", nl: "Dank je! Tot ziens.",         en: "Thank you! Goodbye." },
+          { speaker: "Max",  nl: "Tot ziens!",                  en: "Goodbye!" },
+        ]
+      }
+    },
+    {
+      id: "supermarket-basics",
+      level: "A0",
+      emoji: "🛒",
+      title:    { en: "Supermarket basics",     nl: "Supermarkt basics" },
+      subtitle: { en: "5 essential words",       nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 simple words you need in a Dutch supermarket. These are the most common things you will see and say when you go shopping." },
+      words: [
+        { nl: "brood",   en: "bread",            emoji: "🍞",  image: null, audio: null },
+        { nl: "water",   en: "water",            emoji: "💧",  image: null, audio: null },
+        { nl: "melk",    en: "milk",             emoji: "🥛",  image: null, audio: null },
+        { nl: "kassa",   en: "checkout / till",  emoji: "💳",  image: null, audio: null },
+        { nl: "tas",     en: "bag",              emoji: "👜",  image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik koop brood.",       en: "I buy bread." },
+        { nl: "Waar is de kassa?",    en: "Where is the checkout?" },
+      ],
+      dialogue: {
+        context: { en: "At the supermarket" },
+        lines: [
+          { speaker: "Customer", nl: "Hallo! Waar is het brood?",      en: "Hello! Where is the bread?" },
+          { speaker: "Staff",    nl: "Hier. Het brood is hier.",        en: "Here. The bread is here." },
+          { speaker: "Customer", nl: "Dank je! Waar is de kassa?",     en: "Thank you! Where is the checkout?" },
+          { speaker: "Staff",    nl: "De kassa is daar.",               en: "The checkout is there." },
+          { speaker: "Customer", nl: "Dank je. Tot ziens!",             en: "Thank you. Goodbye!" },
+          { speaker: "Staff",    nl: "Tot ziens!",                      en: "Goodbye!" },
+        ]
+      }
+    },
+    {
+      id: "numbers",
+      level: "A0",
+      emoji: "🔢",
+      title:    { en: "Numbers 1 to 5",    nl: "Getallen 1 tot 5" },
+      subtitle: { en: "5 essential numbers", nl: "5 essentiële getallen" },
+      intro:    { en: "In this lesson you will learn to count from one to five in Dutch. Numbers are essential every day — for prices, addresses, and telling the time." },
+      words: [
+        { nl: "één",   en: "one",   emoji: "1️⃣", image: null, audio: null },
+        { nl: "twee",  en: "two",   emoji: "2️⃣", image: null, audio: null },
+        { nl: "drie",  en: "three", emoji: "3️⃣", image: null, audio: null },
+        { nl: "vier",  en: "four",  emoji: "4️⃣", image: null, audio: null },
+        { nl: "vijf",  en: "five",  emoji: "5️⃣", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik heb één kind.",        en: "I have one child." },
+        { nl: "Er zijn twee stoelen.",   en: "There are two chairs." },
+      ],
+      dialogue: {
+        context: { en: "Counting at the market" },
+        lines: [
+          { speaker: "Seller",   nl: "Hoeveel wilt u?",      en: "How many do you want?" },
+          { speaker: "Customer", nl: "Twee, alsjeblieft.",   en: "Two, please." },
+          { speaker: "Seller",   nl: "Dat is twee euro.",    en: "That is two euros." },
+          { speaker: "Customer", nl: "Nee, ik wil drie.",    en: "No, I want three." },
+          { speaker: "Seller",   nl: "Drie euro dan.",       en: "Three euros then." },
+          { speaker: "Customer", nl: "Dank je. Tot ziens!",  en: "Thank you. Goodbye!" },
+        ]
+      }
+    },
+    {
+      id: "colours",
+      level: "A0",
+      emoji: "🎨",
+      title:    { en: "Colours",           nl: "Kleuren" },
+      subtitle: { en: "5 essential colours", nl: "5 essentiële kleuren" },
+      intro:    { en: "In this lesson you will learn 5 basic colours in Dutch. You will use colours every day — to describe things, find your bag, or buy the right product." },
+      words: [
+        { nl: "rood",  en: "red",    emoji: "🔴", image: null, audio: null },
+        { nl: "blauw", en: "blue",   emoji: "🔵", image: null, audio: null },
+        { nl: "geel",  en: "yellow", emoji: "🟡", image: null, audio: null },
+        { nl: "groen", en: "green",  emoji: "🟢", image: null, audio: null },
+        { nl: "wit",   en: "white",  emoji: "⬜", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "De auto is rood.",   en: "The car is red." },
+        { nl: "Mijn tas is blauw.", en: "My bag is blue." },
+      ],
+      dialogue: {
+        context: { en: "Choosing a jacket in a shop" },
+        lines: [
+          { speaker: "Customer", nl: "Heeft u dit jasje in blauw?",  en: "Do you have this jacket in blue?" },
+          { speaker: "Staff",    nl: "Ja, in blauw en in groen.",    en: "Yes, in blue and in green." },
+          { speaker: "Customer", nl: "Wat is het verschil?",         en: "What is the difference?" },
+          { speaker: "Staff",    nl: "Dit is blauw. Dat is groen.",  en: "This is blue. That is green." },
+          { speaker: "Customer", nl: "Ik neem het blauwe.",          en: "I will take the blue one." },
+          { speaker: "Staff",    nl: "Goed! Hier is uw jasje.",      en: "Great! Here is your jacket." },
+        ]
+      }
+    },
+    {
+      id: "family",
+      level: "A0",
+      emoji: "👨‍👩‍👧",
+      title:    { en: "Family",           nl: "Familie" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 family words in Dutch. You will use these when you introduce yourself, fill in forms, or talk about your family." },
+      words: [
+        { nl: "moeder", en: "mother",  emoji: "👩", image: null, audio: null },
+        { nl: "vader",  en: "father",  emoji: "👨", image: null, audio: null },
+        { nl: "kind",   en: "child",   emoji: "🧒", image: null, audio: null },
+        { nl: "broer",  en: "brother", emoji: "👦", image: null, audio: null },
+        { nl: "zus",    en: "sister",  emoji: "👧", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Dit is mijn moeder.",    en: "This is my mother." },
+        { nl: "Mijn broer woont hier.", en: "My brother lives here." },
+      ],
+      dialogue: {
+        context: { en: "Showing a family photo" },
+        lines: [
+          { speaker: "Person A", nl: "Is dit uw familie?",            en: "Is this your family?" },
+          { speaker: "Person B", nl: "Ja. Dit is mijn vader.",        en: "Yes. This is my father." },
+          { speaker: "Person A", nl: "En wie is dit?",                en: "And who is this?" },
+          { speaker: "Person B", nl: "Dat is mijn zus. Ze heet Sara.", en: "That is my sister. Her name is Sara." },
+          { speaker: "Person A", nl: "Heeft u ook een broer?",        en: "Do you also have a brother?" },
+          { speaker: "Person B", nl: "Ja, één broer. Hij heet Tom.",  en: "Yes, one brother. His name is Tom." },
+        ]
+      }
+    },
+    {
+      id: "days",
+      level: "A0",
+      emoji: "📅",
+      title:    { en: "Days of the week",  nl: "Dagen van de week" },
+      subtitle: { en: "5 essential days",  nl: "5 essentiële dagen" },
+      intro:    { en: "In this lesson you will learn 5 days of the week in Dutch. You will need these to make appointments, plan your week, and understand when things are open." },
+      words: [
+        { nl: "maandag",  en: "Monday",    emoji: "📆", image: null, audio: null },
+        { nl: "woensdag", en: "Wednesday", emoji: "📆", image: null, audio: null },
+        { nl: "vrijdag",  en: "Friday",    emoji: "📆", image: null, audio: null },
+        { nl: "zaterdag", en: "Saturday",  emoji: "🛒", image: null, audio: null },
+        { nl: "zondag",   en: "Sunday",    emoji: "☀️", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Op maandag werk ik.",           en: "On Monday I work." },
+        { nl: "Zaterdag ga ik naar de markt.", en: "On Saturday I go to the market." },
+      ],
+      dialogue: {
+        context: { en: "Making an appointment" },
+        lines: [
+          { speaker: "Receptionist", nl: "Wanneer kunt u komen?",          en: "When can you come?" },
+          { speaker: "Patient",      nl: "Kan het op woensdag?",           en: "Is Wednesday possible?" },
+          { speaker: "Receptionist", nl: "Woensdag is vol. Vrijdag?",      en: "Wednesday is full. Friday?" },
+          { speaker: "Patient",      nl: "Vrijdag is goed.",               en: "Friday is fine." },
+          { speaker: "Receptionist", nl: "Dan op vrijdag om tien uur.",    en: "Then Friday at ten o'clock." },
+          { speaker: "Patient",      nl: "Dank u wel. Tot vrijdag!",       en: "Thank you. See you Friday!" },
+        ]
+      }
+    },
+
+    // ─── 9 NEW A0 THEMES ───────────────────────────────────────────────────
+
+    {
+      id: "body-parts",
+      level: "A0",
+      emoji: "👤",
+      title:    { en: "Body parts",        nl: "Lichaamsdelen" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 basic body parts in Dutch. You will use these when visiting a doctor, describing how you feel, or pointing to something on yourself." },
+      words: [
+        { nl: "hoofd", en: "head",  emoji: "🗣️", image: null, audio: null },
+        { nl: "oog",   en: "eye",   emoji: "👁️",  image: null, audio: null },
+        { nl: "oor",   en: "ear",   emoji: "👂",  image: null, audio: null },
+        { nl: "neus",  en: "nose",  emoji: "👃",  image: null, audio: null },
+        { nl: "mond",  en: "mouth", emoji: "👄",  image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Mijn hoofd doet zeer.", en: "My head hurts." },
+        { nl: "Mijn oor doet pijn.",   en: "My ear hurts." },
+      ],
+      dialogue: {
+        context: { en: "At the doctor / GP" },
+        lines: [
+          { speaker: "Doctor",  nl: "Wat is het probleem?",          en: "What is the problem?" },
+          { speaker: "Patient", nl: "Mijn hoofd doet zeer.",         en: "My head hurts." },
+          { speaker: "Doctor",  nl: "En uw oor?",                    en: "And your ear?" },
+          { speaker: "Patient", nl: "Mijn oor doet ook pijn.",       en: "My ear hurts too." },
+          { speaker: "Doctor",  nl: "Ik kijk naar uw neus en mond.", en: "I will look at your nose and mouth." },
+          { speaker: "Patient", nl: "Dank u wel, dokter.",           en: "Thank you, doctor." },
+        ]
+      }
+    },
+    {
+      id: "food-drinks",
+      level: "A0",
+      emoji: "🍎",
+      title:    { en: "Food and drinks",   nl: "Eten en drinken" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 words for food and drinks in Dutch. You will use these every day — at home, in a shop, or when ordering something." },
+      words: [
+        { nl: "brood",  en: "bread",  emoji: "🍞", image: null, audio: null },
+        { nl: "melk",   en: "milk",   emoji: "🥛", image: null, audio: null },
+        { nl: "kaas",   en: "cheese", emoji: "🧀", image: null, audio: null },
+        { nl: "appel",  en: "apple",  emoji: "🍎", image: null, audio: null },
+        { nl: "koffie", en: "coffee", emoji: "☕", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik eet brood met kaas.", en: "I eat bread with cheese." },
+        { nl: "Ik drink koffie.",       en: "I drink coffee." },
+      ],
+      dialogue: {
+        context: { en: "In the kitchen at home" },
+        lines: [
+          { speaker: "A", nl: "Wat eten we?",          en: "What are we eating?" },
+          { speaker: "B", nl: "Brood met kaas.",        en: "Bread with cheese." },
+          { speaker: "A", nl: "En drinken?",            en: "And to drink?" },
+          { speaker: "B", nl: "Melk of koffie.",        en: "Milk or coffee." },
+          { speaker: "A", nl: "Koffie, alsjeblieft.",   en: "Coffee, please." },
+          { speaker: "B", nl: "Hier is je koffie.",     en: "Here is your coffee." },
+        ]
+      }
+    },
+    {
+      id: "at-home",
+      level: "A0",
+      emoji: "🏠",
+      title:    { en: "At home",           nl: "Thuis" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 words for home and furniture in Dutch. You will use these to describe where things are, fill in forms, or talk about where you live." },
+      words: [
+        { nl: "huis",   en: "house", emoji: "🏠", image: null, audio: null },
+        { nl: "kamer",  en: "room",  emoji: "🚪", image: null, audio: null },
+        { nl: "bed",    en: "bed",   emoji: "🛏️", image: null, audio: null },
+        { nl: "tafel",  en: "table", emoji: "🪑", image: null, audio: null },
+        { nl: "stoel",  en: "chair", emoji: "🪑", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Mijn huis is groot.",  en: "My house is big." },
+        { nl: "De tafel is nieuw.",   en: "The table is new." },
+      ],
+      dialogue: {
+        context: { en: "Visiting a new home" },
+        lines: [
+          { speaker: "Guest", nl: "Wat een mooi huis!",                   en: "What a nice house!" },
+          { speaker: "Host",  nl: "Dank je. Kom binnen.",                 en: "Thank you. Come in." },
+          { speaker: "Guest", nl: "Hoeveel kamers zijn er?",              en: "How many rooms are there?" },
+          { speaker: "Host",  nl: "Drie kamers en een keuken.",           en: "Three rooms and a kitchen." },
+          { speaker: "Guest", nl: "Is dit de woonkamer?",                 en: "Is this the living room?" },
+          { speaker: "Host",  nl: "Ja. De tafel en stoelen zijn nieuw.",  en: "Yes. The table and chairs are new." },
+        ]
+      }
+    },
+    {
+      id: "clothes",
+      level: "A0",
+      emoji: "👕",
+      title:    { en: "Clothes",           nl: "Kleding" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 clothing words in Dutch. You will use these to describe what you are wearing, shop for clothes, or talk about the weather." },
+      words: [
+        { nl: "broek",  en: "trousers", emoji: "👖", image: null, audio: null },
+        { nl: "shirt",  en: "shirt",    emoji: "👕", image: null, audio: null },
+        { nl: "schoen", en: "shoe",     emoji: "👟", image: null, audio: null },
+        { nl: "jas",    en: "jacket",   emoji: "🧥", image: null, audio: null },
+        { nl: "muts",   en: "hat",      emoji: "🧢", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Mijn broek is blauw.", en: "My trousers are blue." },
+        { nl: "De jas is warm.",      en: "The jacket is warm." },
+      ],
+      dialogue: {
+        context: { en: "Getting dressed in the morning" },
+        lines: [
+          { speaker: "A", nl: "Waar is mijn jas?",          en: "Where is my jacket?" },
+          { speaker: "B", nl: "Op de stoel.",               en: "On the chair." },
+          { speaker: "A", nl: "En mijn schoenen?",          en: "And my shoes?" },
+          { speaker: "B", nl: "Bij de deur.",               en: "By the door." },
+          { speaker: "A", nl: "Ik pak ook mijn muts.",      en: "I will also take my hat." },
+          { speaker: "B", nl: "Goed. Het is koud buiten.",  en: "Good. It is cold outside." },
+        ]
+      }
+    },
+    {
+      id: "weather",
+      level: "A0",
+      emoji: "☀️",
+      title:    { en: "Weather",           nl: "Het weer" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 weather words in Dutch. Dutch people talk about the weather every day — you will need these words from the very first week." },
+      words: [
+        { nl: "zon",   en: "sun",  emoji: "☀️", image: null, audio: null },
+        { nl: "regen", en: "rain", emoji: "🌧️", image: null, audio: null },
+        { nl: "wind",  en: "wind", emoji: "💨", image: null, audio: null },
+        { nl: "warm",  en: "warm", emoji: "🌡️", image: null, audio: null },
+        { nl: "koud",  en: "cold", emoji: "🥶", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Het is warm vandaag.", en: "It is warm today." },
+        { nl: "Er is veel regen.",    en: "There is a lot of rain." },
+      ],
+      dialogue: {
+        context: { en: "Talking about the weather outside" },
+        lines: [
+          { speaker: "A", nl: "Het is warm vandaag.",      en: "It is warm today." },
+          { speaker: "B", nl: "Ja, maar er is veel wind.", en: "Yes, but there is a lot of wind." },
+          { speaker: "A", nl: "Gaat het regenen?",         en: "Is it going to rain?" },
+          { speaker: "B", nl: "Nee, de zon schijnt.",      en: "No, the sun is shining." },
+          { speaker: "A", nl: "Dan ga ik op de fiets.",    en: "Then I will go by bicycle." },
+          { speaker: "B", nl: "Goed idee!",                en: "Good idea!" },
+        ]
+      }
+    },
+    {
+      id: "transport",
+      level: "A0",
+      emoji: "🚌",
+      title:    { en: "Transport",         nl: "Vervoer" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 transport words in Dutch. You will use these to explain how you travel, ask for directions, or understand public transport." },
+      words: [
+        { nl: "auto",   en: "car",     emoji: "🚗", image: null, audio: null },
+        { nl: "fiets",  en: "bicycle", emoji: "🚲", image: null, audio: null },
+        { nl: "trein",  en: "train",   emoji: "🚆", image: null, audio: null },
+        { nl: "bus",    en: "bus",     emoji: "🚌", image: null, audio: null },
+        { nl: "straat", en: "street",  emoji: "🛣️", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik rij op de fiets.", en: "I ride the bicycle." },
+        { nl: "De trein is snel.",   en: "The train is fast." },
+      ],
+      dialogue: {
+        context: { en: "Getting to work" },
+        lines: [
+          { speaker: "Colleague", nl: "Hoe ben je gekomen?",       en: "How did you get here?" },
+          { speaker: "Person",    nl: "Op de fiets.",              en: "By bicycle." },
+          { speaker: "Colleague", nl: "De trein is sneller.",      en: "The train is faster." },
+          { speaker: "Person",    nl: "Maar de fiets is beter.",   en: "But the bicycle is better." },
+          { speaker: "Colleague", nl: "Neem je de bus morgen?",    en: "Will you take the bus tomorrow?" },
+          { speaker: "Person",    nl: "Nee. Ik ga te voet.",       en: "No. I will walk." },
+        ]
+      }
+    },
+    {
+      id: "basic-verbs",
+      level: "A0",
+      emoji: "💬",
+      title:    { en: "Basic verbs",       nl: "Basiswerkwoorden" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 essential Dutch verbs. These verbs are used in almost every sentence — learning them will help you say so much more in Dutch." },
+      words: [
+        { nl: "zijn",   en: "to be",   emoji: "🔵", image: null, audio: null },
+        { nl: "hebben", en: "to have", emoji: "✋", image: null, audio: null },
+        { nl: "willen", en: "to want", emoji: "🙋", image: null, audio: null },
+        { nl: "gaan",   en: "to go",   emoji: "🚶", image: null, audio: null },
+        { nl: "eten",   en: "to eat",  emoji: "🍽️", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik wil eten.",      en: "I want to eat." },
+        { nl: "We gaan naar huis.", en: "We are going home." },
+      ],
+      dialogue: {
+        context: { en: "Planning a meal" },
+        lines: [
+          { speaker: "A", nl: "Wil je eten?",                  en: "Do you want to eat?" },
+          { speaker: "B", nl: "Ja, ik wil eten.",              en: "Yes, I want to eat." },
+          { speaker: "A", nl: "We gaan naar het restaurant.",  en: "We will go to the restaurant." },
+          { speaker: "B", nl: "Goed. Ik heb honger.",          en: "Good. I am hungry." },
+          { speaker: "A", nl: "Wat wil je eten?",              en: "What do you want to eat?" },
+          { speaker: "B", nl: "Ik eet graag brood.",           en: "I like to eat bread." },
+        ]
+      }
+    },
+    {
+      id: "adjectives",
+      level: "A0",
+      emoji: "📏",
+      title:    { en: "Describing words",  nl: "Beschrijvende woorden" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 basic adjectives in Dutch. These words help you describe things around you — their size, age, and quality." },
+      words: [
+        { nl: "groot", en: "big",  emoji: "🔺", image: null, audio: null },
+        { nl: "klein", en: "small",emoji: "🔻", image: null, audio: null },
+        { nl: "oud",   en: "old",  emoji: "⏳", image: null, audio: null },
+        { nl: "nieuw", en: "new",  emoji: "✨", image: null, audio: null },
+        { nl: "goed",  en: "good", emoji: "✅", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Het huis is groot.", en: "The house is big." },
+        { nl: "De auto is oud.",    en: "The car is old." },
+      ],
+      dialogue: {
+        context: { en: "Describing things at home" },
+        lines: [
+          { speaker: "A", nl: "Dit is mijn nieuwe huis.",      en: "This is my new house." },
+          { speaker: "B", nl: "Het is groot!",                 en: "It is big!" },
+          { speaker: "A", nl: "Ja, maar de meubels zijn oud.", en: "Yes, but the furniture is old." },
+          { speaker: "B", nl: "Oud is ook goed.",              en: "Old is also fine." },
+          { speaker: "A", nl: "De keuken is klein.",           en: "The kitchen is small." },
+          { speaker: "B", nl: "Maar het is een goed huis.",    en: "But it is a good house." },
+        ]
+      }
+    },
+    {
+      id: "question-words",
+      level: "A0",
+      emoji: "❓",
+      title:    { en: "Question words",   nl: "Vraagwoorden" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 Dutch question words. These are the most important words for communication — they help you ask for help, find places, and understand others." },
+      words: [
+        { nl: "waar",    en: "where",    emoji: "📍", image: null, audio: null },
+        { nl: "wat",     en: "what",     emoji: "❓", image: null, audio: null },
+        { nl: "wie",     en: "who",      emoji: "👤", image: null, audio: null },
+        { nl: "hoe",     en: "how",      emoji: "❔", image: null, audio: null },
+        { nl: "hoeveel", en: "how many", emoji: "🔢", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Waar is de kassa?",   en: "Where is the checkout?" },
+        { nl: "Hoeveel kost dit?",   en: "How much does this cost?" },
+      ],
+      dialogue: {
+        context: { en: "Asking for directions / information" },
+        lines: [
+          { speaker: "A",     nl: "Waar is de kassa?",          en: "Where is the checkout?" },
+          { speaker: "Staff", nl: "Rechtdoor, aan het einde.",   en: "Straight ahead, at the end." },
+          { speaker: "A",     nl: "Hoeveel kost dit?",           en: "How much does this cost?" },
+          { speaker: "Staff", nl: "Vijf euro.",                  en: "Five euros." },
+          { speaker: "A",     nl: "Wie kan mij helpen?",         en: "Who can help me?" },
+          { speaker: "Staff", nl: "Ik help u.",                  en: "I will help you." },
+        ]
+      }
+    },
+
+    // ─── 5 NEW A1 THEMES ───────────────────────────────────────────────────
+
+    {
+      id: "numbers-6-10",
+      level: "A1",
+      emoji: "🔢",
+      title:    { en: "Numbers 6 to 10",   nl: "Getallen 6 tot 10" },
+      subtitle: { en: "5 essential numbers", nl: "5 essentiële getallen" },
+      intro:    { en: "In this lesson you will learn to count from six to ten in Dutch. You will use these numbers every day — for prices, quantities, and telling the time." },
+      words: [
+        { nl: "zes",   en: "six",   emoji: "6️⃣", image: null, audio: null },
+        { nl: "zeven", en: "seven", emoji: "7️⃣", image: null, audio: null },
+        { nl: "acht",  en: "eight", emoji: "8️⃣", image: null, audio: null },
+        { nl: "negen", en: "nine",  emoji: "9️⃣", image: null, audio: null },
+        { nl: "tien",  en: "ten",   emoji: "🔟", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Ik wil zes appels.",                  en: "I want six apples." },
+        { nl: "De winkel is open tot tien uur.",     en: "The shop is open until ten o'clock." },
+      ],
+      dialogue: {
+        context: { en: "Buying multiple items at a market" },
+        lines: [
+          { speaker: "Seller",   nl: "Hoeveel wilt u?",            en: "How many do you want?" },
+          { speaker: "Customer", nl: "Zes, alsjeblieft.",          en: "Six, please." },
+          { speaker: "Seller",   nl: "En appels?",                 en: "And apples?" },
+          { speaker: "Customer", nl: "Zeven appels.",              en: "Seven apples." },
+          { speaker: "Seller",   nl: "Dat is tien euro totaal.",   en: "That is ten euros in total." },
+          { speaker: "Customer", nl: "Dank je. Tot ziens!",        en: "Thank you. Goodbye!" },
+        ]
+      }
+    },
+    {
+      id: "extended-family",
+      level: "A1",
+      emoji: "👴",
+      title:    { en: "Extended family",   nl: "Uitgebreide familie" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 more family words in Dutch. You will use these when talking about your family, filling in forms, or at family events." },
+      words: [
+        { nl: "opa",   en: "grandfather", emoji: "👴", image: null, audio: null },
+        { nl: "oma",   en: "grandmother", emoji: "👵", image: null, audio: null },
+        { nl: "man",   en: "husband",     emoji: "👨", image: null, audio: null },
+        { nl: "vrouw", en: "wife",        emoji: "👩", image: null, audio: null },
+        { nl: "baby",  en: "baby",        emoji: "👶", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Mijn opa is tachtig jaar.", en: "My grandfather is eighty years old." },
+        { nl: "We hebben een baby.",       en: "We have a baby." },
+      ],
+      dialogue: {
+        context: { en: "Talking about family at a birthday" },
+        lines: [
+          { speaker: "A", nl: "Is dit uw familie?",                  en: "Is this your family?" },
+          { speaker: "B", nl: "Ja. Dit zijn mijn opa en oma.",       en: "Yes. These are my grandfather and grandmother." },
+          { speaker: "A", nl: "En wie is dat?",                      en: "And who is that?" },
+          { speaker: "B", nl: "Mijn man. En dit is onze baby.",      en: "My husband. And this is our baby." },
+          { speaker: "A", nl: "Wat een mooie familie!",              en: "What a beautiful family!" },
+          { speaker: "B", nl: "Dank je. Mijn vrouw komt zo.",        en: "Thank you. My wife is coming soon." },
+        ]
+      }
+    },
+    {
+      id: "more-colours",
+      level: "A1",
+      emoji: "🎨",
+      title:    { en: "More colours",      nl: "Meer kleuren" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 more Dutch colours. With these you can describe almost any colour you see every day — in clothes, rooms, and nature." },
+      words: [
+        { nl: "zwart", en: "black",  emoji: "⬛", image: null, audio: null },
+        { nl: "grijs",  en: "grey",   emoji: "🩶", image: null, audio: null },
+        { nl: "bruin",  en: "brown",  emoji: "🟫", image: null, audio: null },
+        { nl: "roze",   en: "pink",   emoji: "🩷", image: null, audio: null },
+        { nl: "oranje", en: "orange", emoji: "🟠", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "De muur is grijs.",           en: "The wall is grey." },
+        { nl: "Ik wil een bruine tafel.",    en: "I want a brown table." },
+      ],
+      dialogue: {
+        context: { en: "Choosing paint colours for a room" },
+        lines: [
+          { speaker: "A", nl: "Welke kleur voor de muur?",   en: "Which colour for the wall?" },
+          { speaker: "B", nl: "Grijs of bruin?",             en: "Grey or brown?" },
+          { speaker: "A", nl: "Ik wil grijs.",               en: "I want grey." },
+          { speaker: "B", nl: "En de tafel?",                en: "And the table?" },
+          { speaker: "A", nl: "Bruin of oranje.",            en: "Brown or orange." },
+          { speaker: "B", nl: "Ik kies zwart.",              en: "I choose black." },
+        ]
+      }
+    },
+    {
+      id: "shop-money",
+      level: "A1",
+      emoji: "💶",
+      title:    { en: "Shopping and money", nl: "Winkelen en geld" },
+      subtitle: { en: "5 essential words",  nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 words for shopping and money in Dutch. These are essential for everyday life — buying food, paying at the checkout, and asking prices." },
+      words: [
+        { nl: "winkel",  en: "shop",       emoji: "🏪", image: null, audio: null },
+        { nl: "geld",    en: "money",      emoji: "💰", image: null, audio: null },
+        { nl: "prijs",   en: "price",      emoji: "🏷️", image: null, audio: null },
+        { nl: "betalen", en: "to pay",     emoji: "💳", image: null, audio: null },
+        { nl: "duur",    en: "expensive",  emoji: "💸", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Wat is de prijs?",    en: "What is the price?" },
+        { nl: "Ik betaal met geld.", en: "I pay with cash." },
+      ],
+      dialogue: {
+        context: { en: "At the checkout" },
+        lines: [
+          { speaker: "Customer", nl: "Wat is de prijs?",               en: "What is the price?" },
+          { speaker: "Staff",    nl: "Acht euro.",                      en: "Eight euros." },
+          { speaker: "Customer", nl: "Is dat duur?",                    en: "Is that expensive?" },
+          { speaker: "Staff",    nl: "Nee, het is een goede prijs.",    en: "No, it is a good price." },
+          { speaker: "Customer", nl: "Ik betaal met geld.",             en: "I will pay with cash." },
+          { speaker: "Staff",    nl: "Dank u. Hier is uw wisselgeld.",  en: "Thank you. Here is your change." },
+        ]
+      }
+    },
+    {
+      id: "time-expressions",
+      level: "A1",
+      emoji: "🕐",
+      title:    { en: "Time expressions",  nl: "Tijdsaanduidingen" },
+      subtitle: { en: "5 essential words", nl: "5 essentiële woorden" },
+      intro:    { en: "In this lesson you will learn 5 time words in Dutch. You will need these to make appointments, say when something happens, and understand schedules." },
+      words: [
+        { nl: "uur",     en: "hour / o'clock", emoji: "🕐", image: null, audio: null },
+        { nl: "ochtend", en: "morning",        emoji: "🌅", image: null, audio: null },
+        { nl: "middag",  en: "afternoon",      emoji: "☀️", image: null, audio: null },
+        { nl: "avond",   en: "evening",        emoji: "🌆", image: null, audio: null },
+        { nl: "nacht",   en: "night",          emoji: "🌙", image: null, audio: null },
+      ],
+      sentences: [
+        { nl: "Om negen uur 's ochtends.", en: "At nine o'clock in the morning." },
+        { nl: "Ik werk tot vijf uur.",     en: "I work until five o'clock." },
+      ],
+      dialogue: {
+        context: { en: "Making an appointment by phone" },
+        lines: [
+          { speaker: "Receptionist", nl: "Wanneer kunt u komen?",          en: "When can you come?" },
+          { speaker: "Patient",      nl: "Kan het 's ochtends?",           en: "Is the morning possible?" },
+          { speaker: "Receptionist", nl: "Ja. Om negen uur?",              en: "Yes. At nine o'clock?" },
+          { speaker: "Patient",      nl: "Goed. Negen uur.",               en: "Good. Nine o'clock." },
+          { speaker: "Receptionist", nl: "En 's avonds kan ook.",          en: "And in the evening is also possible." },
+          { speaker: "Patient",      nl: "Nee, de ochtend is beter.",      en: "No, the morning is better." },
+        ]
+      }
+    },
+  ];
+
+  // ══════════════════════════════════════════
+  //  STANDALONE FLASHCARD DATA
+  // ══════════════════════════════════════════
+  const flashcardSets = [
+    {
+      id: "supermarket",
+      title: { en: "Supermarket", nl: "Supermarkt" },
+      subtitle: { en: "5 everyday words", nl: "5 dagelijkse woorden" },
+      emoji: "🛒",
+      cards: [
+        { nl: "boodschappen", en: "groceries",  emoji: "🛒", image: null, audio: null },
+        { nl: "kassa",        en: "checkout",   emoji: "💳", image: null, audio: null },
+        { nl: "korting",      en: "discount",   emoji: "🏷️", image: null, audio: null },
+        { nl: "tas",          en: "bag",        emoji: "👜", image: null, audio: null },
+        { nl: "wachten",      en: "to wait",    emoji: "⏳", image: null, audio: null },
+      ]
+    }
+  ];
+
+  // ══════════════════════════════════════════
+  //  STORIES
+  // ══════════════════════════════════════════
+  const stories = [
+    {
+      emoji: "🧺",
+      level: "a1",
+      theme: "family",
+      difficulty: 1,
+      en: {
+        title:  "Family Picnic",
+        teaser: "James and his family spend a sunny Sunday in the park.",
+        keywords: [
+          { word: "picnic",        emoji: "🧺", audio: null, image: null, translation: { nl: "picknick" },      meaning: { en: "a meal eaten outside in nature" },             example: "We had a picnic in the park." },
+          { word: "blanket",       emoji: "🛏️", audio: null, image: null, translation: { nl: "kleedje" },       meaning: { en: "a piece of cloth to sit on" },                 example: "We sat on a blanket on the grass." },
+          { word: "sandwiches",    emoji: "🥪", audio: null, image: null, translation: { nl: "boterhammen" },   meaning: { en: "bread with filling inside" },                  example: "She made sandwiches with cheese." },
+          { word: "hide and seek", emoji: "🙈", audio: null, image: null, translation: { nl: "verstoppertje" }, meaning: { en: "a game where you hide and someone finds you" }, example: "The children played hide and seek." }
+        ],
+        paragraphs: [
+          "I am James. This is my family.",
+          "Last Sunday, my family went on a picnic. We went to the park. The sun was out and it was a nice day.",
+          "First, my mom brought a lot of snacks. She had sandwiches, apples, and juice. I helped her carry the bag.",
+          "Then, we found a big tree in the park. We sat down on a blanket. We ate a lot. The sandwiches were yummy.",
+          "After we ate, we played hide and seek. I hid behind the tree. My dad looked for me. He said, \"I see you, James!\"",
+          "We all laughed. It was a fun day at the park. I love my family."
+        ],
+        questions: [
+          { question: "What is the name of the boy?",          options: ["Tom","Jack","James","Sam"],                                                                              correct: 2, explanation: { en: "The story starts with: \"I am James.\"",                        nl: "Het verhaal begint met: \"I am James.\""           } },
+          { question: "Where did the family go last Sunday?",  options: ["To the beach","To a restaurant","To school","To the park"],                                               correct: 3, explanation: { en: "The story says: \"We went to the park.\"",                         nl: "In het verhaal staat: \"We went to the park.\""    } },
+          { question: "What did mom bring?",                   options: ["Cookies, milk, and fruit","Sandwiches, apples, and juice","Pizza, chips, and water","Cake, tea, and biscuits"], correct: 1, explanation: { en: "The story says: \"She had sandwiches, apples, and juice.\"",   nl: "In het verhaal staat: \"She had sandwiches, apples, and juice.\"" } },
+          { question: "What game did they play after eating?", options: ["Football","Tag","Hide and seek","Catch"],                                                                  correct: 2, explanation: { en: "The story says: \"we played hide and seek.\"",                    nl: "In het verhaal staat: \"we played hide and seek.\""       } },
+          { question: "Where did James hide?",                 options: ["Behind a bush","Under the blanket","Behind his mom","Behind the tree"],                                    correct: 3, explanation: { en: "The story says: \"I hid behind the tree.\"",                     nl: "In het verhaal staat: \"I hid behind the tree.\""          } }
+        ]
+      },
+      nl: {
+        title:  "Familiedag in het Park",
+        teaser: "James en zijn familie brengen een zonnige zondag door in het park.",
+        keywords: [
+          { word: "picknick",      emoji: "🧺", audio: null, image: null, translation: { en: "picnic" },          meaning: { nl: "buiten eten in de natuur" },               example: "We hadden een picknick in het park." },
+          { word: "kleedje",       emoji: "🛏️", audio: null, image: null, translation: { en: "blanket / mat" },   meaning: { nl: "een stuk stof om op te zitten" },           example: "We zaten op een kleedje in het gras." },
+          { word: "boterhammen",   emoji: "🥪", audio: null, image: null, translation: { en: "sandwiches" },      meaning: { nl: "brood met beleg" },                         example: "Ze had boterhammen met kaas gemaakt." },
+          { word: "verstoppertje", emoji: "🙈", audio: null, image: null, translation: { en: "hide and seek" },   meaning: { nl: "een spel waarbij je je verstopt" },         example: "De kinderen speelden verstoppertje." }
+        ],
+        paragraphs: [
+          "Ik ben James. Dit is mijn familie.",
+          "Afgelopen zondag gingen we op een picknick. We gingen naar het park. De zon scheen en het was een mooie dag.",
+          "Eerst bracht mijn moeder veel lekkers mee. Ze had boterhammen, appels en sap. Ik hielp haar de tas te dragen.",
+          "Daarna vonden we een grote boom in het park. We gingen op een kleedje zitten. We aten veel. De boterhammen waren lekker.",
+          "Na het eten speelden we verstoppertje. Ik verstopte me achter de boom. Mijn vader zocht me. Hij zei: \"Ik zie je, James!\"",
+          "We lachten allemaal. Het was een leuke dag in het park. Ik hou van mijn familie."
+        ],
+        questions: [
+          { question: "Wat is de naam van de jongen?",               options: ["Tom","Jack","James","Sam"],                                                                                correct: 2, explanation: { nl: "Het verhaal begint met: \"Ik ben James.\"",              en: "The story starts with: \"Ik ben James.\""          } },
+          { question: "Waar ging de familie heen afgelopen zondag?", options: ["Naar het strand","Naar een restaurant","Naar school","Naar het park"],                                      correct: 3, explanation: { nl: "In het verhaal staat: \"We gingen naar het park.\"",    en: "The story says: \"We gingen naar het park.\""      } },
+          { question: "Wat nam moeder mee?",                         options: ["Koekjes, melk en fruit","Boterhammen, appels en sap","Pizza, chips en water","Taart, thee en koekjes"],    correct: 1, explanation: { nl: "In het verhaal staat: \"Ze had boterhammen, appels en sap.\"", en: "The story says: \"Ze had boterhammen, appels en sap.\"" } },
+          { question: "Welk spel speelden ze na het eten?",          options: ["Voetbal","Tikkertje","Verstoppertje","Vangen"],                                                             correct: 2, explanation: { nl: "In het verhaal staat: \"speelden we verstoppertje.\"",  en: "The story says: \"speelden we verstoppertje.\""    } },
+          { question: "Waar verstopte James zich?",                  options: ["Achter een struik","Onder het kleedje","Achter zijn moeder","Achter de boom"],                              correct: 3, explanation: { nl: "In het verhaal staat: \"Ik verstopte me achter de boom.\"", en: "The story says: \"Ik verstopte me achter de boom.\"" } }
+        ]
+      }
+    },
+    {
+      emoji: "🐶",
+      level: "a1",
+      theme: "daily-life",
+      difficulty: 1,
+      en: {
+        title:  "My Dog Max",
+        teaser: "Meet Max — the funniest dog in the neighbourhood.",
+        keywords: [
+          { word: "neighbourhood", emoji: "🏘️", audio: null, image: null, translation: { nl: "buurt" },     meaning: { en: "the area near your home" },                     example: "There are many shops in my neighbourhood." },
+          { word: "bowl",          emoji: "🥣", audio: null, image: null, translation: { nl: "bak" },        meaning: { en: "a round container for food or water" },         example: "The dog drinks from a bowl." },
+          { word: "lead",          emoji: "🐕", audio: null, image: null, translation: { nl: "riem" },       meaning: { en: "a strap used to walk a dog" },                  example: "She held the lead tightly." },
+          { word: "snores",        emoji: "💤", audio: null, image: null, translation: { nl: "snurkt" },     meaning: { en: "makes a loud noise while sleeping" },           example: "He snores loudly every night." }
+        ],
+        paragraphs: [
+          "My name is Lisa. I have a dog. His name is Max.",
+          "Max is big and brown. He has long ears and a short tail. He loves to run in the garden.",
+          "Every morning, I give Max his food. He eats it very fast. Then he drinks water from his bowl.",
+          "After breakfast, we go for a walk. Max pulls the lead. He wants to run! We walk past the shops and the school.",
+          "When we come home, Max is tired. He sleeps on his big red bed. He snores a little.",
+          "I love Max very much. He is my best friend."
+        ],
+        questions: [
+          { question: "What is the name of the girl?",  options: ["Emma","Lisa","Anna","Sara"],                                                                             correct: 1, explanation: { en: "The story says: \"My name is Lisa.\"",                nl: "In het verhaal staat: \"My name is Lisa.\""                } },
+          { question: "What does Max look like?",       options: ["Small and white","Big and brown","Tiny and black","Tall and grey"],                                       correct: 1, explanation: { en: "The story says: \"Max is big and brown.\"",             nl: "In het verhaal staat: \"Max is big and brown.\""           } },
+          { question: "What does Max do after eating?", options: ["He plays with a ball","He drinks water from his bowl","He runs in the garden","He sleeps on the sofa"],   correct: 1, explanation: { en: "The story says: \"he drinks water from his bowl.\"",   nl: "In het verhaal staat: \"he drinks water from his bowl.\""  } },
+          { question: "Where do they walk past?",       options: ["The park and the river","The beach and the shops","The shops and the school","The school and the park"],   correct: 2, explanation: { en: "The story says: \"past the shops and the school.\"",   nl: "In het verhaal staat: \"past the shops and the school.\""  } },
+          { question: "What colour is Max's bed?",      options: ["Blue","Green","Yellow","Red"],                                                                            correct: 3, explanation: { en: "The story says: \"his big red bed.\"",                nl: "In het verhaal staat: \"his big red bed.\""                } }
+        ]
+      },
+      nl: {
+        title:  "Mijn Hond Max",
+        teaser: "Maak kennis met Max — de grappigste hond van de buurt.",
+        keywords: [
+          { word: "buurt",   emoji: "🏘️", audio: null, image: null, translation: { en: "neighbourhood" }, meaning: { nl: "de omgeving bij je thuis" },                example: "Er zijn veel winkels in mijn buurt." },
+          { word: "bak",     emoji: "🥣", audio: null, image: null, translation: { en: "bowl" },          meaning: { nl: "een ronde bak voor eten of water" },         example: "De hond drinkt uit een bak." },
+          { word: "riem",    emoji: "🐕", audio: null, image: null, translation: { en: "lead / leash" },  meaning: { nl: "een koord om een hond mee uit te laten" },   example: "Ze hield de riem stevig vast." },
+          { word: "snurkt",  emoji: "💤", audio: null, image: null, translation: { en: "snores" },        meaning: { nl: "maakt een luid geluid tijdens het slapen" }, example: "Hij snurkt elke nacht." }
+        ],
+        paragraphs: [
+          "Ik heet Lisa. Ik heb een hond. Hij heet Max.",
+          "Max is groot en bruin. Hij heeft lange oren en een korte staart. Hij rent graag in de tuin.",
+          "Elke ochtend geef ik Max zijn eten. Hij eet het heel snel op. Daarna drinkt hij water uit zijn bak.",
+          "Na het ontbijt gaan we een wandeling maken. Max trekt aan de riem. Hij wil rennen! We lopen langs de winkels en de school.",
+          "Als we thuiskomen is Max moe. Hij slaapt op zijn grote rode mand. Hij snurkt een beetje.",
+          "Ik hou heel veel van Max. Hij is mijn beste vriend."
+        ],
+        questions: [
+          { question: "Wat is de naam van het meisje?",  options: ["Emma","Lisa","Anna","Sara"],                                                                                  correct: 1, explanation: { nl: "In het verhaal staat: \"Ik heet Lisa.\"",                  en: "The story says: \"Ik heet Lisa.\""                 } },
+          { question: "Hoe ziet Max eruit?",             options: ["Klein en wit","Groot en bruin","Piepklein en zwart","Lang en grijs"],                                          correct: 1, explanation: { nl: "In het verhaal staat: \"Max is groot en bruin.\"",        en: "The story says: \"Max is groot en bruin.\""        } },
+          { question: "Wat doet Max na het eten?",       options: ["Hij speelt met een bal","Hij drinkt water uit zijn bak","Hij rent in de tuin","Hij slaapt op de bank"],       correct: 1, explanation: { nl: "In het verhaal staat: \"drinkt hij water uit zijn bak.\"", en: "The story says: \"drinkt hij water uit zijn bak.\"" } },
+          { question: "Waar lopen ze langs?",            options: ["Het park en de rivier","Het strand en de winkels","De winkels en de school","De school en het park"],          correct: 2, explanation: { nl: "In het verhaal staat: \"langs de winkels en de school.\"", en: "The story says: \"langs de winkels en de school.\"" } },
+          { question: "Welke kleur heeft Max zijn mand?",options: ["Blauw","Groen","Geel","Rood"],                                                                                 correct: 3, explanation: { nl: "In het verhaal staat: \"zijn grote rode mand.\"",         en: "The story says: \"zijn grote rode mand.\""         } }
+        ]
+      }
+    },
+    {
+      emoji: "🛒",
+      level: "a0",
+      theme: "supermarket",
+      difficulty: 1,
+      en: {
+        title:  "At the Supermarket",
+        teaser: "Ali goes shopping for the first time in the Netherlands.",
+        keywords: [
+          { word: "shopping",  emoji: "🛒", audio: null, image: null, translation: { nl: "boodschappen" }, meaning: { en: "buying food and other things in a shop" }, example: "I do my shopping on Saturday." },
+          { word: "checkout",  emoji: "💳", audio: null, image: null, translation: { nl: "kassa" },        meaning: { en: "the place in a shop where you pay" },      example: "I wait at the checkout." },
+          { word: "discount",  emoji: "🏷️", audio: null, image: null, translation: { nl: "korting" },      meaning: { en: "a lower price than normal" },             example: "There is a discount on milk." },
+          { word: "bag",       emoji: "👜", audio: null, image: null, translation: { nl: "tas" },          meaning: { en: "a container you carry things in" },       example: "I put my shopping in a bag." },
+          { word: "wait",      emoji: "⏳", audio: null, image: null, translation: { nl: "wachten" },      meaning: { en: "to stay until something happens" },       example: "I wait at the checkout." }
+        ],
+        paragraphs: [
+          "My name is Ali. I live in Amsterdam.",
+          "Today I go shopping. I go to the supermarket.",
+          "In the supermarket I buy bread and milk. There is a discount on milk.",
+          "I take a bag. I put my shopping in the bag.",
+          "At the checkout I have to wait. There are many people.",
+          "I pay and go home. Shopping is not difficult."
+        ],
+        questions: [
+          { question: "Where does Ali live?",              options: ["Rotterdam","Utrecht","Amsterdam","Den Haag"],                                                       correct: 2, explanation: { en: "The story says: \"I live in Amsterdam.\"",                         nl: "In het verhaal staat: \"I live in Amsterdam.\""             } },
+          { question: "What does Ali buy?",                options: ["Cheese and apples","Bread and milk","Coffee and tea","Meat and vegetables"],                        correct: 1, explanation: { en: "The story says: \"I buy bread and milk.\"",                       nl: "In het verhaal staat: \"I buy bread and milk.\""            } },
+          { question: "What has a discount?",              options: ["Bread","Milk","Coffee","Cheese"],                                                                    correct: 1, explanation: { en: "The story says: \"There is a discount on milk.\"",                nl: "In het verhaal staat: \"There is a discount on milk.\""     } },
+          { question: "What does Ali do at the checkout?", options: ["He calls","He eats","He waits","He runs"],                                                          correct: 2, explanation: { en: "The story says: \"At the checkout I have to wait.\"",              nl: "In het verhaal staat: \"At the checkout I have to wait.\""  } },
+          { question: "Is shopping difficult for Ali?",    options: ["Yes, very difficult","No, not difficult","Yes, sometimes","Maybe"],                                  correct: 1, explanation: { en: "The story says: \"Shopping is not difficult.\"",                 nl: "In het verhaal staat: \"Shopping is not difficult.\""       } }
+        ]
+      },
+      nl: {
+        title:  "Bij de Supermarkt",
+        teaser: "Ali doet voor het eerst boodschappen in Nederland.",
+        keywords: [
+          { word: "boodschappen", emoji: "🛒", audio: null, image: null, translation: { en: "groceries / shopping" }, meaning: { nl: "eten en andere dingen kopen in een winkel" }, example: "Ik doe boodschappen op zaterdag." },
+          { word: "kassa",        emoji: "💳", audio: null, image: null, translation: { en: "checkout / till" },      meaning: { nl: "de plek in een winkel waar je betaalt" },      example: "Ik wacht bij de kassa." },
+          { word: "korting",      emoji: "🏷️", audio: null, image: null, translation: { en: "discount" },             meaning: { nl: "een lagere prijs dan normaal" },              example: "Er is korting op melk." },
+          { word: "tas",          emoji: "👜", audio: null, image: null, translation: { en: "bag" },                  meaning: { nl: "een zak om dingen in te dragen" },            example: "Ik doe mijn boodschappen in de tas." },
+          { word: "wachten",      emoji: "⏳", audio: null, image: null, translation: { en: "to wait" },              meaning: { nl: "blijven totdat iets gebeurt" },               example: "Ik moet wachten bij de kassa." }
+        ],
+        paragraphs: [
+          "Mijn naam is Ali. Ik woon in Amsterdam.",
+          "Vandaag doe ik boodschappen. Ik ga naar de supermarkt.",
+          "In de supermarkt koop ik brood en melk. Er is korting op melk.",
+          "Ik pak een tas. Ik doe mijn boodschappen in de tas.",
+          "Bij de kassa moet ik wachten. Er zijn veel mensen.",
+          "Ik betaal en ga naar huis. Boodschappen doen is niet moeilijk."
+        ],
+        questions: [
+          { question: "Waar woont Ali?",                  options: ["Rotterdam","Utrecht","Amsterdam","Den Haag"],                                                          correct: 2, explanation: { en: "The story says: \"Ik woon in Amsterdam.\"",                   nl: "In het verhaal staat: \"Ik woon in Amsterdam.\""           } },
+          { question: "Wat koopt Ali?",                   options: ["Kaas en appels","Brood en melk","Koffie en thee","Vlees en groente"],                                  correct: 1, explanation: { en: "The story says: \"Ik koop brood en melk.\"",                 nl: "In het verhaal staat: \"Ik koop brood en melk.\""          } },
+          { question: "Waarop is korting?",               options: ["Op brood","Op melk","Op koffie","Op kaas"],                                                            correct: 1, explanation: { en: "The story says: \"Er is korting op melk.\"",                 nl: "In het verhaal staat: \"Er is korting op melk.\""          } },
+          { question: "Wat doet Ali bij de kassa?",       options: ["Hij belt","Hij eet","Hij wacht","Hij loopt"],                                                          correct: 2, explanation: { en: "The story says: \"Bij de kassa moet ik wachten.\"",            nl: "In het verhaal staat: \"Bij de kassa moet ik wachten.\""   } },
+          { question: "Is boodschappen doen moeilijk?",   options: ["Ja, heel moeilijk","Nee, niet moeilijk","Ja, soms","Misschien"],                                       correct: 1, explanation: { en: "The story says: \"Boodschappen doen is niet moeilijk.\"",    nl: "In het verhaal staat: \"Boodschappen doen is niet moeilijk.\"" } }
+        ]
+      }
+    }
+  ];
+
+  // ══════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════
+  let interfaceLang   = "en";
+  let learningLang    = "en";
+  let currentStory    = null;
+  let currentQ        = 0;
+  let score           = 0;
+  let answers         = [];
+  let currentKeywords = [];
+  // Learn step
+  let learnIdx        = 0;
+  // Practice step
+  let practiceItems   = [];
+  let practiceIdx     = 0;
+  // Beginner route
+  let blTheme         = null;
+  let blStep          = 0;      // 0=intro 1=learn 2=listen 3=picture 4=sentences 5=dialogue 6=review
+  let blWordIdx       = 0;
+  let blListenItems   = [];
+  let blListenIdx     = 0;
+  let blListenScore   = 0;
+  let blLevel         = "A0";  // "A0" or "A1" — set by startBeginnerRoute(level)
+  let blPicItems      = [];
+  let blPicIdx        = 0;
+  let blPicScore      = 0;
+  const BL_STEPS      = 7;     // total numbered steps (intro=0 not counted; step 7=review)
+  // Sentence builder state
+  let sbSentences     = [];
+  let sbIdx           = 0;
+  let sbTray          = [];
+  let sbPool          = [];
+  let sbChecked       = false;
+  // Standalone flashcards
+  let fcCurrentSet    = null;
+  let fcCards         = [];
+  let fcIdx           = 0;
+  let fcQuizItems     = [];
+  let fcQIdx          = 0;
+  let fcScore         = 0;
+
+  const tr  = ()  => i18n[interfaceLang];
+  const sc  = (s) => s[learningLang];
+
+  // ══════════════════════════════════════════
+  //  PROGRESS (localStorage)
+  // ══════════════════════════════════════════
+  function loadProgress() {
+    try { return JSON.parse(localStorage.getItem("lapp_v1") || "{}"); }
+    catch { return {}; }
+  }
+  function saveProgress(idx, s, total) {
+    const p = loadProgress();
+    if (!p[idx] || s > (p[idx].best || 0)) {
+      p[idx] = { done: true, best: s, total };
+    }
+    try { localStorage.setItem("lapp_v1", JSON.stringify(p)); } catch {}
+  }
+
+  // ══════════════════════════════════════════
+  //  BEGINNER LESSON PROGRESS (lapp_progress_v1)
+  // ══════════════════════════════════════════
+  function loadBeginnerProgress() {
+    try {
+      const raw = JSON.parse(localStorage.getItem("lapp_progress_v1") || "null");
+      if (!raw || typeof raw !== "object") throw new Error();
+      if (!raw.themes)  raw.themes  = {};
+      if (!raw.summary) raw.summary = { totalThemesCompleted: 0, totalWordsLearned: 0, lastThemeId: null, lastThemeStep: 0 };
+      return raw;
+    } catch {
+      return { themes: {}, summary: { totalThemesCompleted: 0, totalWordsLearned: 0, lastThemeId: null, lastThemeStep: 0 } };
+    }
+  }
+
+  function saveBeginnerProgress(p) {
+    try { localStorage.setItem("lapp_progress_v1", JSON.stringify(p)); } catch {}
+  }
+
+  function markThemeStarted(id) {
+    const p = loadBeginnerProgress();
+    if (!p.themes[id]) p.themes[id] = { started: true, completed: false, highestStep: 0, listenScore: 0, pictureScore: 0, completedAt: null };
+    p.themes[id].started = true;
+    p.summary.lastThemeId   = id;
+    p.summary.lastThemeStep = p.themes[id].highestStep || 0;
+    saveBeginnerProgress(p);
+  }
+
+  function markThemeStepReached(id, step) {
+    const p = loadBeginnerProgress();
+    if (!p.themes[id]) p.themes[id] = { started: true, completed: false, highestStep: 0, listenScore: 0, pictureScore: 0, completedAt: null };
+    if (step > (p.themes[id].highestStep || 0)) p.themes[id].highestStep = step;
+    p.summary.lastThemeId   = id;
+    p.summary.lastThemeStep = step;
+    saveBeginnerProgress(p);
+  }
+
+  function markThemeCompleted(id, listenScore, picScore) {
+    const p = loadBeginnerProgress();
+    if (!p.themes[id]) p.themes[id] = { started: true, completed: false, highestStep: 0, listenScore: 0, pictureScore: 0, completedAt: null };
+    const wasCompleted = p.themes[id].completed;
+    p.themes[id].completed    = true;
+    p.themes[id].highestStep  = BL_STEPS;
+    p.themes[id].listenScore  = listenScore;
+    p.themes[id].pictureScore = picScore;
+    p.themes[id].completedAt  = new Date().toISOString();
+    if (!wasCompleted) {
+      p.summary.totalThemesCompleted++;
+      p.summary.totalWordsLearned = p.summary.totalThemesCompleted * 5;
+    }
+    p.summary.lastThemeId   = id;
+    p.summary.lastThemeStep = BL_STEPS;
+    saveBeginnerProgress(p);
+  }
+
+  function renderHomeProgress() {
+    const prog = loadBeginnerProgress();
+    const panel = document.getElementById("home-progress-panel");
+    if (!panel) return;
+    const hasAnyActivity = prog.summary.totalThemesCompleted > 0 || prog.summary.lastThemeId;
+    if (!hasAnyActivity) { panel.style.display = "none"; return; }
+    panel.style.display = "flex";
+    document.getElementById("hp-lessons").textContent = prog.summary.totalThemesCompleted;
+    document.getElementById("hp-words").textContent   = prog.summary.totalWordsLearned;
+    const continueBtn = document.getElementById("hp-continue-btn");
+    const lastId   = prog.summary.lastThemeId;
+    const lastRec  = lastId && prog.themes[lastId];
+    const inProgress = lastRec && !lastRec.completed;
+    continueBtn.style.display = inProgress ? "block" : "none";
+  }
+
+  function continueLesson() {
+    const prog = loadBeginnerProgress();
+    const id   = prog.summary.lastThemeId;
+    const step = prog.summary.lastThemeStep || 1;
+    if (!id) return;
+    interfaceLang = "en"; learningLang = "nl";
+    document.documentElement.setAttribute("lang", "en");
+    applyTranslations();
+    blTheme = beginnerThemes.find(t => t.id === id);
+    if (!blTheme) return;
+    blLevel   = blTheme.level || "A0";
+    blStep    = step;
+    blWordIdx = 0;
+    blListenItems = [...blTheme.words].sort(() => Math.random() - 0.5); blListenIdx = 0; blListenScore = 0;
+    blPicItems    = [...blTheme.words].sort(() => Math.random() - 0.5); blPicIdx    = 0; blPicScore    = 0;
+    renderBlStep();
+    showScreen("screen-beginner-lesson");
+  }
+
+  // ══════════════════════════════════════════
+  //  LANGUAGE SELECTION
+  // ══════════════════════════════════════════
+  function selectPractice(lang) {
+    // Single selection sets both UI lang and learning lang
+    if (lang === "nl") { interfaceLang = "en"; learningLang = "nl"; }
+    else               { interfaceLang = "nl"; learningLang = "en"; }
+    document.documentElement.setAttribute("lang", interfaceLang);
+    updateIndicator();
+    applyTranslations();
+    buildSelectionCards();
+    showScreen("screen-select");
+  }
+
+  // Legacy — kept so old deep-links still work
+  function selectUiLang(lang) {
+    interfaceLang = lang;
+    document.documentElement.setAttribute("lang", lang);
+    applyTranslations();
+    showScreen("screen-learn-lang");
+  }
+  function selectLearnLang(lang) {
+    learningLang = lang;
+    updateIndicator();
+    applyTranslations();
+    buildSelectionCards();
+    showScreen("screen-select");
+  }
+
+  function goToHome() { showScreen("screen-home"); }
+
+  function updateIndicator() {
+    const flags = { en: "🇬🇧", nl: "🇳🇱" };
+    const names = { en: "English", nl: "Nederlands" };
+    document.getElementById("ui-indicator-flag").textContent  = flags[learningLang];
+    document.getElementById("ui-indicator-label").textContent = names[learningLang];
+  }
+
+  // ══════════════════════════════════════════
+  //  TRANSLATIONS
+  // ══════════════════════════════════════════
+  function applyTranslations() {
+    const t = tr();
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    // Home
+    set("ui-home-title",      t.homeTitle);
+    set("ui-home-subtitle",   t.homeSubtitle);
+    set("ui-home-start",      t.homeStart);
+    set("ui-home-about",      t.homeAbout);
+    // Practice select
+    set("ui-ps-back",         t.psBack);
+    set("ui-ps-title",        t.psTitle);
+    set("ui-ps-a0",           t.psA0);
+    set("ui-ps-a0-sub",       t.psA0Sub);
+    set("ui-ps-a1",           t.psA1);
+    set("ui-ps-a1-sub",       t.psA1Sub);
+    set("ui-ps-a2",           t.psA2);
+    set("ui-ps-a2-sub",       t.psA2Sub);
+    set("ui-ps-more",         t.psMore);
+    set("ui-ps-more-sub",     t.psMoreSub);
+    // About
+    set("ui-about-back",         t.aboutBack);
+    set("ui-about-title",        t.aboutTitle);
+    set("ui-about-name-label",   t.aboutNameLabel);
+    set("ui-about-contact-label",t.aboutContactLabel);
+    // Story select
+    set("ui-select-back",     t.selectBack);
+    set("ui-learn-title",     t.learnTitle);
+    set("ui-learn-subtitle",  t.learnSubtitle);
+    set("ui-lang-label",      t.langLabel);
+    set("ui-choose-story",    t.chooseStory);
+    // Story reading
+    set("ui-back-link",       t.allStories);
+    set("ui-read-story",      t.readStory);
+    set("ui-start-btn",       t.startQuestions);
+    set("ui-keywords-label",  t.keywordsLabel);
+    set("ui-reread",          t.reread);
+    // Results
+    set("ui-try-again",       t.tryAgain);
+    set("ui-reread-story",    t.rereadStory);
+    set("ui-choose-another",  t.chooseAnother);
+    // Flashcard themes
+    set("ui-fc-themes-back",  t.fcThemesBack);
+    set("ui-fc-themes-title", t.fcThemesTitle);
+    // Flashcard learn
+    set("ui-fc-learn-back",   t.fcLearnBack);
+    set("ui-fc-learn-label",  t.fcLearnLabel);
+    set("ui-fc-flip-hint",    t.fcFlipHint);
+    // Flashcard quiz
+    set("ui-fc-quiz-back",     t.fcQuizBack);
+    set("ui-fc-quiz-question", t.fcQuizQuestion);
+    set("ui-fc-quiz-done",     t.fcQuizDone);
+    set("ui-fc-quiz-retry",    t.fcQuizRetry);
+    set("ui-fc-quiz-themes",   t.fcQuizThemes);
+    // Home progress panel
+    set("ui-hp-lessons",  t.hpLessonsDone);
+    set("ui-hp-words",    t.hpWordsLearned);
+    const hpBtn = document.getElementById("hp-continue-btn");
+    if (hpBtn) hpBtn.textContent = t.hpContinue;
+  }
+
+  // ══════════════════════════════════════════
+  //  SCREENS
+  // ══════════════════════════════════════════
+  const HIDE_INDICATOR_ON = new Set([
+    "screen-home", "screen-ui-lang", "screen-learn-lang",
+    "screen-practice-select", "screen-about",
+    "screen-flashcard-themes", "screen-flashcard-learn", "screen-flashcard-quiz",
+    "screen-beginner-themes", "screen-beginner-lesson"
+  ]);
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    closeWordPopup();
+    document.getElementById("lang-indicator").classList.toggle("hidden", HIDE_INDICATOR_ON.has(id));
+    if (id === "screen-select") buildSelectionCards();
+    if (id === "screen-flashcard-themes") buildFlashcardThemes();
+    if (id === "screen-beginner-themes") buildBeginnerThemeList();
+    if (id === "screen-home") renderHomeProgress();
+  }
+
+  // ══════════════════════════════════════════
+  //  STORY SELECTION
+  // ══════════════════════════════════════════
+  function buildSelectionCards() {
+    const t    = tr();
+    const prog = loadProgress();
+    const wrap = document.getElementById("story-cards-wrap");
+    wrap.innerHTML = "";
+    stories.forEach((story, idx) => {
+      const c    = sc(story);
+      const p    = prog[idx];
+      const done = p && p.done;
+      const best = p ? p.best : null;
+      const card = document.createElement("button");
+      card.className = "story-card";
+      card.setAttribute("aria-label", c.title);
+      card.onclick = () => openStory(idx);
+      let dots = "";
+      for (let d = 1; d <= 3; d++) dots += `<span class="dot${d <= story.difficulty ? " filled" : ""}"></span>`;
+      const tagHTML = done
+        ? `<span class="tag done">✓ ${t.doneTag} · ${best}/${c.questions.length}</span>`
+        : `<span class="tag">${c.questions.length} ${t.questionsTag}</span>`;
+      card.innerHTML = `
+        <div class="story-card-emoji">${story.emoji}</div>
+        <div class="story-card-info">
+          <h2>${escHTML(c.title)}</h2>
+          <p>${escHTML(c.teaser)}</p>
+        </div>
+        <div class="story-card-meta">${tagHTML}<div class="difficulty">${dots}</div></div>
+        <span class="arrow-icon" aria-hidden="true">›</span>`;
+      wrap.appendChild(card);
+    });
+  }
+
+  function openStory(idx) {
+    currentStory = stories[idx];
+    currentStory._idx = idx;
+    updateStoryScreen();
+    learnIdx = 0;
+    showLearnCard(0);
+    showScreen("screen-word-intro");
+  }
+
+  // ══════════════════════════════════════════
+  //  LEARN STEP
+  // ══════════════════════════════════════════
+  function showLearnCard(idx) {
+    const t     = tr();
+    const c     = sc(currentStory);
+    const kws   = c.keywords || [];
+    const kw    = kws[idx];
+    const total = kws.length;
+
+    document.getElementById("ui-learn-back").textContent       = t.allStories;
+    document.getElementById("ui-learn-step-label").textContent = t.learnStepLabel;
+    document.getElementById("learn-progress").textContent      = t.cardOf(idx + 1, total);
+
+    // Visual: real image if available, otherwise emoji
+    const emojiEl = document.getElementById("learn-emoji");
+    if (kw.image) {
+      emojiEl.innerHTML = `<img src="${escHTML(kw.image)}" alt="${escHTML(kw.word)}" class="flash-img">`;
+    } else {
+      emojiEl.textContent = kw.emoji || "📖";
+    }
+
+    document.getElementById("learn-word").textContent          = kw.word;
+    const meaning = (interfaceLang !== learningLang)
+      ? (kw.translation[interfaceLang] || "")
+      : (kw.meaning[interfaceLang]     || "");
+    document.getElementById("learn-trans").textContent         = meaning;
+    document.getElementById("learn-example").textContent       = kw.example || "";
+
+    const nextBtn = document.getElementById("ui-learn-next-btn");
+    nextBtn.textContent = (idx === total - 1) ? t.startPractice : t.nextWord;
+  }
+
+  function nextLearnCard() {
+    const c     = sc(currentStory);
+    const total = (c.keywords || []).length;
+    learnIdx++;
+    if (learnIdx < total) {
+      showLearnCard(learnIdx);
+    } else {
+      buildPracticeScreen();
+      showScreen("screen-practice");
+    }
+  }
+
+  // ══════════════════════════════════════════
+  //  PRACTICE STEP
+  // ══════════════════════════════════════════
+  function buildPracticeScreen() {
+    const c     = sc(currentStory);
+    const kws   = c.keywords || [];
+    practiceItems = [...kws].sort(() => Math.random() - 0.5);
+    practiceIdx   = 0;
+    showPracticeItem(0);
+  }
+
+  function showPracticeItem(idx) {
+    const t     = tr();
+    const kw    = practiceItems[idx];
+    const total = practiceItems.length;
+    const c     = sc(currentStory);
+    const kws   = c.keywords || [];
+
+    document.getElementById("ui-practice-back").textContent       = t.allStories;
+    document.getElementById("ui-practice-step-label").textContent = t.practiceStepLabel;
+    document.getElementById("practice-progress").textContent      = t.cardOf(idx + 1, total);
+
+    const emojiEl = document.getElementById("practice-emoji");
+    if (kw.image) {
+      emojiEl.innerHTML = `<img src="${escHTML(kw.image)}" alt="${escHTML(kw.word)}" class="flash-img" style="width:100px;height:100px">`;
+    } else {
+      emojiEl.textContent = kw.emoji || "❓";
+    }
+    document.getElementById("ui-practice-question").textContent = t.practiceQuestion;
+
+    const distractors = kws
+      .filter(k => k.word !== kw.word)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+    const options = [kw, ...distractors].sort(() => Math.random() - 0.5);
+
+    const wrap = document.getElementById("practice-options-wrap");
+    wrap.innerHTML = "";
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className   = "practice-option";
+      btn.textContent = opt.word;
+      btn.onclick     = () => selectPracticeAnswer(btn, opt.word === kw.word);
+      wrap.appendChild(btn);
+    });
+
+    const fb = document.getElementById("practice-feedback-box");
+    fb.className = "feedback-box";
+    document.getElementById("practice-verdict").textContent       = "";
+    document.getElementById("ui-practice-next-btn").style.display = "none";
+  }
+
+  function selectPracticeAnswer(btn, isRight) {
+    const t = tr();
+    document.querySelectorAll(".practice-option").forEach(b => {
+      b.disabled = true;
+      if (b === btn) b.classList.add(isRight ? "correct" : "wrong");
+    });
+    if (!isRight) {
+      const kw = practiceItems[practiceIdx];
+      document.querySelectorAll(".practice-option").forEach(b => {
+        if (b.textContent === kw.word) b.classList.add("correct");
+      });
+    }
+    const fb = document.getElementById("practice-feedback-box");
+    fb.className = "feedback-box " + (isRight ? "correct" : "wrong");
+    document.getElementById("practice-verdict").textContent =
+      isRight ? t.practiceCorrect : t.practiceWrong;
+
+    const nextBtn = document.getElementById("ui-practice-next-btn");
+    nextBtn.style.display = "block";
+    nextBtn.textContent   = (practiceIdx === practiceItems.length - 1) ? t.startReading : t.nextWord;
+  }
+
+  function nextPracticeItem() {
+    practiceIdx++;
+    if (practiceIdx < practiceItems.length) {
+      showPracticeItem(practiceIdx);
+    } else {
+      showScreen("screen-story");
+    }
+  }
+
+  // ══════════════════════════════════════════
+  //  KEYWORD MARKUP
+  // ══════════════════════════════════════════
+  function escHTML(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function escReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+
+  function markupText(text) {
+    if (!currentKeywords.length) return escHTML(text);
+    const sorted = currentKeywords.map((kw, i) => ({ ...kw, i })).sort((a, b) => b.word.length - a.word.length);
+    let result = escHTML(text);
+    sorted.forEach(kw => {
+      const pat = new RegExp(`\\b(${escReg(escHTML(kw.word))})\\b`, "gi");
+      result = result.replace(pat, (m) =>
+        `<button class="keyword-btn" onclick="showWordPopup(event,${kw.i})">${m}</button>`
+      );
+    });
+    return result;
+  }
+
+  function updateStoryScreen() {
+    const c = sc(currentStory);
+    currentKeywords = c.keywords || [];
+    document.getElementById("story-title").textContent = c.title;
+
+    const bar   = document.getElementById("keywords-bar");
+    const chips = document.getElementById("keywords-chips-wrap");
+    if (currentKeywords.length) {
+      bar.classList.remove("hidden");
+      chips.innerHTML = currentKeywords.map((kw, i) =>
+        `<button class="keyword-chip" onclick="showWordPopup(event,${i})">${escHTML(kw.word)}</button>`
+      ).join("");
+    } else {
+      bar.classList.add("hidden");
+    }
+
+    document.getElementById("story-body").innerHTML      = c.paragraphs.map(p => `<p>${markupText(p)}</p>`).join("");
+    document.getElementById("story-mini-text").innerHTML = c.paragraphs.map(p => `<p>${escHTML(p)}</p>`).join("");
+  }
+
+  // ══════════════════════════════════════════
+  //  WORD POPUP
+  // ══════════════════════════════════════════
+  function showWordPopup(event, idx) {
+    event.stopPropagation();
+    const kw    = currentKeywords[idx];
+    const t     = tr();
+    const popup = document.getElementById("word-popup");
+    const card  = document.querySelector(".card");
+
+    const translation = (interfaceLang !== learningLang)
+      ? (kw.translation[interfaceLang] || "")
+      : (kw.meaning[interfaceLang] || "");
+
+    document.getElementById("popup-word").textContent          = kw.word;
+    document.getElementById("popup-translation").textContent   = translation;
+    document.getElementById("popup-example-label").textContent = t.exampleLabel;
+    document.getElementById("popup-example").textContent       = kw.example || "";
+
+    popup.classList.remove("hidden");
+    const br = event.target.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    let top  = br.bottom - cr.top + 8;
+    let left = br.left - cr.left;
+    const pw = 280;
+    if (left + pw > card.offsetWidth - 16) left = card.offsetWidth - pw - 16;
+    if (left < 8) left = 8;
+    popup.style.top  = top + "px";
+    popup.style.left = left + "px";
+  }
+
+  function closeWordPopup() {
+    document.getElementById("word-popup").classList.add("hidden");
+  }
+
+  document.addEventListener("click", (e) => {
+    const popup = document.getElementById("word-popup");
+    if (!popup.classList.contains("hidden") && !popup.contains(e.target)) closeWordPopup();
+  });
+
+  // Keyboard support for flip card
+  document.getElementById("fc-flip-card").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flipCard(); }
+  });
+
+  // ══════════════════════════════════════════
+  //  QUESTIONS
+  // ══════════════════════════════════════════
+  function startQuestions() {
+    currentQ = 0; score = 0; answers = [];
+    renderQuestion();
+    showScreen("screen-question");
+  }
+
+  function renderQuestion() {
+    const t     = tr();
+    const c     = sc(currentStory);
+    const q     = c.questions[currentQ];
+    const total = c.questions.length;
+
+    document.getElementById("progress-fill").style.width  = (currentQ / total * 100) + "%";
+    document.getElementById("progress-label").textContent = t.questionOf(currentQ + 1, total);
+    document.getElementById("question-text").textContent  = q.question;
+
+    const wrap = document.getElementById("options-wrap");
+    wrap.innerHTML = "";
+    ["A","B","C","D"].forEach((letter, i) => {
+      if (i >= q.options.length) return;
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<span class="letter">${letter}</span> ${escHTML(q.options[i])}`;
+      btn.onclick   = () => selectAnswer(i);
+      wrap.appendChild(btn);
+    });
+
+    document.getElementById("feedback-box").className             = "feedback-box";
+    document.getElementById("feedback-verdict").textContent       = "";
+    document.getElementById("feedback-explanation").textContent   = "";
+    document.getElementById("next-btn").style.display             = "none";
+    document.getElementById("story-mini-wrap").removeAttribute("open");
+  }
+
+  function selectAnswer(chosen) {
+    const t       = tr();
+    const c       = sc(currentStory);
+    const q       = c.questions[currentQ];
+    const isRight = chosen === q.correct;
+    if (isRight) score++;
+    answers.push({ correct: isRight, chosen, right: q.correct });
+
+    document.querySelectorAll(".option-btn").forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === q.correct) btn.classList.add("correct");
+      if (i === chosen && !isRight) btn.classList.add("wrong");
+    });
+
+    const fb = document.getElementById("feedback-box");
+    fb.className = "feedback-box " + (isRight ? "correct" : "wrong");
+    document.getElementById("feedback-verdict").textContent =
+      isRight ? t.correct : t.wrong(q.options[q.correct]);
+    document.getElementById("feedback-explanation").textContent =
+      q.explanation ? (q.explanation[interfaceLang] || "") : "";
+
+    const nextBtn = document.getElementById("next-btn");
+    nextBtn.style.display = "block";
+    nextBtn.textContent = currentQ === c.questions.length - 1 ? t.seeResults : t.nextQuestion;
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    const c = sc(currentStory);
+    if (currentQ < c.questions.length) {
+      renderQuestion();
+    } else {
+      saveProgress(currentStory._idx, score, c.questions.length);
+      renderResults();
+      showScreen("screen-results");
+    }
+  }
+
+  // ══════════════════════════════════════════
+  //  RESULTS
+  // ══════════════════════════════════════════
+  function renderResults() {
+    const t     = tr();
+    const c     = sc(currentStory);
+    const total = c.questions.length;
+    const pct   = score / total;
+
+    let icon, title;
+    if (pct === 1)        { icon = "🏆"; title = t.perfectScore; }
+    else if (pct >= 0.75) { icon = "🌟"; title = t.greatJob; }
+    else if (pct >= 0.5)  { icon = "👍"; title = t.goodEffort; }
+    else                  { icon = "📖"; title = t.keepPractising; }
+
+    document.getElementById("results-icon").textContent  = icon;
+    document.getElementById("results-title").textContent = title;
+    document.getElementById("results-score").innerHTML   = t.gotCorrect(score, total);
+
+    const list = document.getElementById("results-list");
+    list.innerHTML = "";
+    answers.forEach((ans, i) => {
+      const q      = c.questions[i];
+      const li     = document.createElement("li");
+      li.className = ans.correct ? "ok" : "fail";
+      const yours  = escHTML(q.options[ans.chosen]);
+      const right  = escHTML(q.options[ans.right]);
+      li.innerHTML = `<span class="q-label">${ans.correct ? "✓" : "✗"} ${escHTML(q.question)}</span>
+        ${ans.correct
+          ? `${t.yourAnswer} ${yours}`
+          : `${t.yourAnswer} ${yours} — ${t.correctAnswer} ${right}`}`;
+      list.appendChild(li);
+    });
+
+    renderWordReview();
+  }
+
+  function renderWordReview() {
+    const t   = tr();
+    const c   = sc(currentStory);
+    const kws = c.keywords || [];
+
+    document.getElementById("ui-review-label").textContent = t.wordsLearned;
+
+    const wrap = document.getElementById("review-words-wrap");
+    wrap.innerHTML = "";
+    kws.forEach(kw => {
+      const meaning = (interfaceLang !== learningLang)
+        ? (kw.translation[interfaceLang] || "")
+        : (kw.meaning[interfaceLang]     || "");
+      const row = document.createElement("div");
+      row.className = "review-word-row";
+      row.innerHTML =
+        `<span class="review-emoji">${kw.emoji || "📖"}</span>` +
+        `<div class="review-word-info">` +
+          `<div class="review-word-nl">${escHTML(kw.word)}</div>` +
+          `<div class="review-word-en">${escHTML(meaning)}</div>` +
+        `</div>`;
+      wrap.appendChild(row);
+    });
+  }
+
+  // ══════════════════════════════════════════
+  //  STANDALONE FLASHCARD MODE
+  // ══════════════════════════════════════════
+  function buildFlashcardThemes() {
+    const list = document.getElementById("fc-theme-list");
+    list.innerHTML = "";
+    flashcardSets.forEach(set => {
+      const btn = document.createElement("button");
+      btn.className = "fc-theme-card";
+      btn.setAttribute("aria-label", set.title[interfaceLang] || set.title.en);
+      btn.onclick = () => openFlashcardSet(set.id);
+      btn.innerHTML = `
+        <div class="fc-theme-icon">${set.emoji}</div>
+        <div class="fc-theme-info">
+          <h2>${escHTML(set.title[interfaceLang] || set.title.en)}</h2>
+          <p>${escHTML(set.subtitle[interfaceLang] || set.subtitle.en)}</p>
+        </div>`;
+      list.appendChild(btn);
+    });
+  }
+
+  function openFlashcardSet(id) {
+    fcCurrentSet = flashcardSets.find(s => s.id === id);
+    if (!fcCurrentSet) return;
+    fcCards = [...fcCurrentSet.cards];
+    fcIdx   = 0;
+    showFlashcardCard(0);
+    showScreen("screen-flashcard-learn");
+  }
+
+  function showFlashcardCard(idx) {
+    const t     = tr();
+    const card  = fcCards[idx];
+    const total = fcCards.length;
+
+    document.getElementById("ui-fc-learn-label").textContent  = t.fcLearnLabel;
+    document.getElementById("fc-learn-progress").textContent  = t.fcCardOf(idx + 1, total);
+    document.getElementById("ui-fc-flip-hint").textContent    = t.fcFlipHint;
+
+    // Visual: image if available, otherwise emoji
+    const frontEl = document.getElementById("fc-front-visual");
+    if (card.image) {
+      frontEl.innerHTML = `<img src="${escHTML(card.image)}" alt="${escHTML(card.nl)}" class="flash-img">`;
+    } else {
+      frontEl.textContent = card.emoji || "❓";
+    }
+    frontEl.className = card.image ? "" : "fc-front-emoji";
+
+    document.getElementById("fc-back-word").textContent  = card.nl;
+    document.getElementById("fc-back-trans").textContent = card.en;
+
+    // Reset flip state
+    document.getElementById("fc-flip-card").classList.remove("flipped");
+    document.getElementById("ui-fc-next-btn").style.display = "none";
+    document.getElementById("ui-fc-next-btn").textContent =
+      (idx === total - 1) ? tr().fcQuizLabel + " →" : t.fcNextCard;
+  }
+
+  function flipCard() {
+    const card = document.getElementById("fc-flip-card");
+    if (card.classList.contains("flipped")) return;
+    card.classList.add("flipped");
+    const nextBtn = document.getElementById("ui-fc-next-btn");
+    nextBtn.style.display = "block";
+    const t = tr();
+    nextBtn.textContent = (fcIdx === fcCards.length - 1)
+      ? t.fcQuizLabel + " →"
+      : t.fcNextCard;
+  }
+
+  function nextFlashcard() {
+    fcIdx++;
+    if (fcIdx < fcCards.length) {
+      showFlashcardCard(fcIdx);
+    } else {
+      buildFlashcardQuiz();
+    }
+  }
+
+  function buildFlashcardQuiz() {
+    fcQuizItems = [...fcCards].sort(() => Math.random() - 0.5);
+    fcQIdx  = 0;
+    fcScore = 0;
+    // Reset result area, show question area
+    document.getElementById("fc-quiz-question-area").style.display = "block";
+    document.getElementById("fc-quiz-result").classList.remove("visible");
+    showFlashcardQuestion(0);
+    showScreen("screen-flashcard-quiz");
+  }
+
+  function showFlashcardQuestion(idx) {
+    const t     = tr();
+    const card  = fcQuizItems[idx];
+    const total = fcQuizItems.length;
+
+    document.getElementById("ui-fc-quiz-label").textContent    = t.fcQuizLabel;
+    document.getElementById("fc-quiz-progress").textContent    = t.fcCardOf(idx + 1, total);
+    document.getElementById("ui-fc-quiz-question").textContent = t.fcQuizQuestion;
+
+    // Visual
+    const visualEl = document.getElementById("fc-quiz-visual");
+    if (card.image) {
+      visualEl.innerHTML = `<img src="${escHTML(card.image)}" alt="" class="flash-img" style="width:120px;height:120px;margin:0 auto;display:block">`;
+    } else {
+      visualEl.textContent = card.emoji || "❓";
+    }
+
+    // 3 options: correct + 2 distractors from same set
+    const distractors = fcCards
+      .filter(c => c.nl !== card.nl)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+    const options = [card, ...distractors].sort(() => Math.random() - 0.5);
+
+    const wrap = document.getElementById("fc-quiz-options");
+    wrap.innerHTML = "";
+    options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className   = "fc-quiz-option";
+      btn.textContent = opt.nl;
+      btn.onclick     = () => selectFlashcardAnswer(btn, opt.nl === card.nl, card.nl);
+      wrap.appendChild(btn);
+    });
+
+    // Reset feedback
+    const fb = document.getElementById("fc-quiz-feedback");
+    fb.className = "feedback-box";
+    document.getElementById("fc-quiz-verdict").textContent  = "";
+    document.getElementById("ui-fc-quiz-next").style.display = "none";
+  }
+
+  function selectFlashcardAnswer(btn, isRight, correctWord) {
+    const t = tr();
+    if (isRight) fcScore++;
+
+    document.querySelectorAll(".fc-quiz-option").forEach(b => {
+      b.disabled = true;
+      if (b === btn) b.classList.add(isRight ? "correct" : "wrong");
+    });
+    if (!isRight) {
+      document.querySelectorAll(".fc-quiz-option").forEach(b => {
+        if (b.textContent === correctWord) b.classList.add("correct");
+      });
+    }
+
+    const fb = document.getElementById("fc-quiz-feedback");
+    fb.className = "feedback-box " + (isRight ? "correct" : "wrong");
+    document.getElementById("fc-quiz-verdict").textContent = isRight ? t.practiceCorrect : t.practiceWrong;
+
+    const nextBtn = document.getElementById("ui-fc-quiz-next");
+    nextBtn.style.display = "block";
+    nextBtn.textContent   = t.fcQuizNext;
+  }
+
+  function nextFlashcardQuizItem() {
+    fcQIdx++;
+    if (fcQIdx < fcQuizItems.length) {
+      showFlashcardQuestion(fcQIdx);
+    } else {
+      showFlashcardResult();
+    }
+  }
+
+  function showFlashcardResult() {
+    const t     = tr();
+    const total = fcQuizItems.length;
+    const pct   = fcScore / total;
+    const icon  = pct === 1 ? "🏆" : pct >= 0.6 ? "🌟" : "📖";
+
+    document.getElementById("fc-quiz-question-area").style.display = "none";
+    const result = document.getElementById("fc-quiz-result");
+    result.classList.add("visible");
+
+    document.getElementById("fc-quiz-result-icon").textContent   = icon;
+    document.getElementById("ui-fc-quiz-done").textContent       = t.fcQuizDone;
+    document.getElementById("fc-quiz-result-score").innerHTML    = t.fcQuizScore(fcScore, total);
+    document.getElementById("ui-fc-quiz-retry").textContent      = t.fcQuizRetry;
+    document.getElementById("ui-fc-quiz-themes").textContent     = t.fcQuizThemes;
+  }
+
+  function retryFlashcardQuiz() {
+    buildFlashcardQuiz();
+  }
+
+  // ══════════════════════════════════════════
+  //  BEGINNER ROUTE
+  // ══════════════════════════════════════════
+  function startBeginnerRoute(level = "A0") {
+    blLevel       = level;
+    interfaceLang = "en";
+    learningLang  = "nl";
+    document.documentElement.setAttribute("lang", "en");
+    applyTranslations();
+    showScreen("screen-beginner-themes");
+  }
+
+  function showMoreOptions() {
+    showScreen("screen-flashcard-themes");
+  }
+
+  function buildBeginnerThemeList() {
+    const t      = tr();
+    const list   = document.getElementById("bl-theme-list");
+    const prog   = loadBeginnerProgress();
+    list.innerHTML = "";
+
+    const levelBadge = document.getElementById("bl-level-badge");
+    if (levelBadge) levelBadge.textContent = blLevel === "A1" ? t.blLevelA1 : t.blLevelA0;
+
+    beginnerThemes
+      .filter(theme => theme.level === blLevel)
+      .forEach(theme => {
+        const rec = prog.themes[theme.id] || {};
+        let badge = "";
+        if (rec.completed) {
+          const ls = rec.listenScore  ?? "–";
+          const ps = rec.pictureScore ?? "–";
+          badge = `<span class="tag done" style="margin-top:6px;font-size:11px">✓ Done · ${ls}/5 · ${ps}/5</span>`;
+        } else if (rec.started) {
+          badge = `<span class="tag in-progress" style="margin-top:6px;font-size:11px">→ In progress</span>`;
+        }
+        const btn = document.createElement("button");
+        btn.className = "fc-theme-card";
+        btn.onclick = () => openBeginnerTheme(theme.id);
+        btn.innerHTML = `
+          <div class="fc-theme-icon">${theme.emoji}</div>
+          <div class="fc-theme-info">
+            <h2>${escHTML(theme.title.en)}</h2>
+            <p>${escHTML(theme.subtitle.en)}</p>
+            ${badge}
+          </div>`;
+        list.appendChild(btn);
+      });
+  }
+
+  function openBeginnerTheme(id) {
+    blTheme = beginnerThemes.find(t => t.id === id);
+    if (!blTheme) return;
+    blStep = 0; blWordIdx = 0;
+    blListenItems = []; blListenIdx = 0; blListenScore = 0;
+    blPicItems    = []; blPicIdx    = 0; blPicScore    = 0;
+    markThemeStarted(id);
+    renderBlStep();
+    showScreen("screen-beginner-lesson");
+  }
+
+  function renderBlStep() {
+    const stepRenders = [
+      renderBlIntro, renderBlLearnWords, renderBlListen,
+      renderBlPicture, renderBlSentences, renderBlDialogue,
+      renderBlSentenceBuilder, renderBlReview
+    ];
+    if (blStep < stepRenders.length) stepRenders[blStep]();
+  }
+
+  function blSetHeader(stepNum, stepName) {
+    // stepNum: 0 = no step number (intro); 1-6 = numbered steps
+    const bar   = document.getElementById("bl-step-bar");
+    const title = document.getElementById("bl-step-title");
+    if (stepNum === 0) {
+      bar.textContent   = "About this lesson";
+      title.textContent = blTheme.title.en;
+    } else {
+      bar.textContent   = `Step ${stepNum} of ${BL_STEPS} · ${stepName}`;
+      title.textContent = stepName;
+    }
+  }
+
+  function blVisual(word) {
+    if (word.image) return `<img src="${escHTML(word.image)}" alt="${escHTML(word.nl)}" class="flash-img">`;
+    return `<span style="font-size:72px;line-height:1;display:block;margin-bottom:18px">${word.emoji || "📖"}</span>`;
+  }
+
+  // ── STEP 0: INTRO ──────────────────────────
+  function renderBlIntro() {
+    const t          = tr();
+    const levelLabel = blLevel === "A1" ? t.blLevelA1 : t.blLevelA0;
+    blSetHeader(0, "");
+    document.getElementById("bl-step-bar").textContent   = levelLabel;
+    document.getElementById("bl-step-title").textContent = "";
+
+    const wordList = blTheme.words.map(w =>
+      `<li class="bl-intro-word">
+        <span style="font-size:28px;line-height:1">${w.emoji || "📖"}</span>
+        <span class="bl-intro-word-nl">${escHTML(w.nl)}</span>
+        <span class="bl-intro-word-en">— ${escHTML(w.en)}</span>
+      </li>`
+    ).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <div class="bl-intro-icon">${blTheme.emoji}</div>
+      <span class="bl-badge">${escHTML(levelLabel)}</span>
+      <h2 class="bl-intro-title">${escHTML(blTheme.title.en)}</h2>
+      <p class="bl-intro-desc">${escHTML(blTheme.intro.en)}</p>
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:10px">You will learn:</p>
+      <ul class="bl-intro-words">${wordList}</ul>
+      <button class="btn-primary" onclick="blNext()">Start lesson →</button>`;
+  }
+
+  // ── STEP 1: LEARN WORDS ───────────────────
+  function renderBlLearnWords() {
+    blSetHeader(1, "Learn words");
+    const w     = blTheme.words[blWordIdx];
+    const total = blTheme.words.length;
+    const isLast = blWordIdx === total - 1;
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
+        Word ${blWordIdx + 1} of ${total}
+      </p>
+      <div class="flash-card" style="text-align:center">
+        <div style="margin-bottom:18px">${blVisual(w)}</div>
+        <div class="flash-card-word">${escHTML(w.nl)}</div>
+        <div class="flash-card-trans">${escHTML(w.en)}</div>
+        ${TTS_SUPPORTED
+          ? `<button class="bl-audio-btn" onclick="speakDutch('${escHTML(w.nl)}')" aria-label="Hear the word ${escHTML(w.nl)}">🔊 Hear word</button>`
+          : `<span class="bl-audio-note">🔊 Audio not available in this browser</span>`}
+      </div>
+      <button class="btn-primary" onclick="blLearnNext()">
+        ${isLast ? "Next step →" : "Next word →"}
+      </button>`;
+  }
+
+  function blLearnNext() {
+    blWordIdx++;
+    if (blWordIdx < blTheme.words.length) {
+      renderBlLearnWords();
+    } else {
+      // Prepare listen items (shuffled)
+      blListenItems = [...blTheme.words].sort(() => Math.random() - 0.5);
+      blListenIdx   = 0;
+      blListenScore = 0;
+      blNext();
+    }
+  }
+
+  // ── STEP 2: LISTEN AND TAP ────────────────
+  function renderBlListen() {
+    blSetHeader(2, "Listen and tap");
+    if (blListenItems.length === 0) {
+      blListenItems = [...blTheme.words].sort(() => Math.random() - 0.5);
+    }
+    showBlListenItem();
+  }
+
+  function showBlListenItem() {
+    const target = blListenItems[blListenIdx];
+    const total  = blListenItems.length;
+
+    // 4 options: target + 3 random distractors from same theme
+    const others = blTheme.words
+      .filter(w => w.nl !== target.nl)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+    const opts = [target, ...others].sort(() => Math.random() - 0.5);
+
+    // AUDIO-ONLY: options show emoji only (no Dutch word text)
+    // data-nl attribute used by blSelectListen() to identify the correct button
+    const optBtns = opts.map(o => `
+      <button class="bl-listen-opt"
+              data-nl="${escHTML(o.nl)}"
+              onclick="blSelectListen(this, ${JSON.stringify(o.nl === target.nl)}, '${escHTML(target.nl)}')">
+        <span class="bl-opt-emoji">${o.image ? `<img src="${escHTML(o.image)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">` : o.emoji || "❓"}</span>
+      </button>`).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px">
+        Question ${blListenIdx + 1} of ${total}
+      </p>
+      <div class="bl-listen-prompt">
+        ${TTS_SUPPORTED
+          ? `<button class="bl-audio-btn" style="margin-top:8px" onclick="speakDutch('${escHTML(target.nl)}')" aria-label="Hear the word">🔊 Tap to hear</button>
+             <div class="bl-listen-hint">Listen and tap the correct picture</div>`
+          : `<div class="bl-listen-hint">Look carefully and tap the correct picture</div>`}
+      </div>
+      <div class="bl-listen-grid">${optBtns}</div>
+      <div class="feedback-box" id="bl-listen-fb"><div class="feedback-verdict" id="bl-listen-verdict"></div></div>
+      <button class="btn-primary" id="bl-listen-next" style="display:none" onclick="blListenNext()">
+        ${blListenIdx === total - 1 ? "Next step →" : "Next →"}
+      </button>`;
+    if (TTS_SUPPORTED) setTimeout(() => speakDutch(target.nl), 400);
+  }
+
+  function blSelectListen(btn, isRight, correctNl) {
+    document.querySelectorAll(".bl-listen-opt").forEach(b => {
+      b.disabled = true;
+      if (b === btn) b.classList.add(isRight ? "correct" : "wrong");
+    });
+    if (!isRight) {
+      // Use data-nl attribute instead of text content (options no longer show Dutch word text)
+      document.querySelectorAll(".bl-listen-opt").forEach(b => {
+        if (b.dataset.nl === correctNl) b.classList.add("correct");
+      });
+    }
+    if (isRight) blListenScore++;
+    const fb = document.getElementById("bl-listen-fb");
+    fb.className = "feedback-box " + (isRight ? "correct" : "wrong");
+    // On wrong answer: reveal the Dutch word so the user learns it
+    const verdict = isRight
+      ? "Correct!"
+      : `Not quite — the word was: "${escHTML(correctNl)}"`;
+    document.getElementById("bl-listen-verdict").innerHTML = verdict;
+    document.getElementById("bl-listen-next").style.display = "block";
+  }
+
+  function blListenNext() {
+    blListenIdx++;
+    if (blListenIdx < blListenItems.length) {
+      showBlListenItem();
+    } else {
+      blPicItems = [...blTheme.words].sort(() => Math.random() - 0.5);
+      blPicIdx   = 0;
+      blPicScore = 0;
+      blNext();
+    }
+  }
+
+  // ── STEP 3: PICTURE TO WORD ───────────────
+  function renderBlPicture() {
+    blSetHeader(3, "Picture to word");
+    if (blPicItems.length === 0) {
+      blPicItems = [...blTheme.words].sort(() => Math.random() - 0.5);
+    }
+    showBlPicItem();
+  }
+
+  function showBlPicItem() {
+    const target = blPicItems[blPicIdx];
+    const total  = blPicItems.length;
+
+    const distractors = blTheme.words
+      .filter(w => w.nl !== target.nl)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+    const opts = [target, ...distractors].sort(() => Math.random() - 0.5);
+
+    const optBtns = opts.map(o => `
+      <button class="practice-option" onclick="blSelectPic(this, ${JSON.stringify(o.nl === target.nl)}, '${escHTML(target.nl)}')">
+        ${escHTML(o.nl)}
+      </button>`).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:16px">
+        Question ${blPicIdx + 1} of ${total}
+      </p>
+      <div style="text-align:center;margin-bottom:20px">
+        ${target.image
+          ? `<img src="${escHTML(target.image)}" alt="" class="flash-img" style="margin:0 auto">`
+          : `<span style="font-size:80px;line-height:1;display:block">${target.emoji || "❓"}</span>`}
+      </div>
+      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:16px">Which word matches the picture?</p>
+      <div class="practice-options">${optBtns}</div>
+      <div class="feedback-box" id="bl-pic-fb"><div class="feedback-verdict" id="bl-pic-verdict"></div></div>
+      <button class="btn-primary" id="bl-pic-next" style="display:none" onclick="blPicNext()">
+        ${blPicIdx === total - 1 ? "Next step →" : "Next →"}
+      </button>`;
+  }
+
+  function blSelectPic(btn, isRight, correctNl) {
+    document.querySelectorAll(".practice-option").forEach(b => {
+      b.disabled = true;
+      if (b === btn) b.classList.add(isRight ? "correct" : "wrong");
+    });
+    if (!isRight) {
+      document.querySelectorAll(".practice-option").forEach(b => {
+        if (b.textContent.trim() === correctNl) b.classList.add("correct");
+      });
+    }
+    if (isRight) blPicScore++;
+    const fb = document.getElementById("bl-pic-fb");
+    fb.className = "feedback-box " + (isRight ? "correct" : "wrong");
+    document.getElementById("bl-pic-verdict").textContent = isRight ? "Correct!" : "Not quite — look at the right answer.";
+    document.getElementById("bl-pic-next").style.display = "block";
+  }
+
+  function blPicNext() {
+    blPicIdx++;
+    if (blPicIdx < blPicItems.length) {
+      showBlPicItem();
+    } else {
+      blNext();
+    }
+  }
+
+  // ── STEP 4: MICRO-SENTENCES ───────────────
+  function renderBlSentences() {
+    blSetHeader(4, "Read sentences");
+    const items = blTheme.sentences.map(s => `
+      <div class="bl-sentence-card">
+        <div class="bl-sentence-nl">${escHTML(s.nl)}</div>
+        <div class="bl-sentence-en">${escHTML(s.en)}</div>
+      </div>`).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <div class="bl-sentence-list">${items}</div>
+      <button class="btn-primary" onclick="blNext()">Next step →</button>`;
+  }
+
+  // ── STEP 5: MINI-DIALOGUE ─────────────────
+  function renderBlDialogue() {
+    blSetHeader(5, "Mini-dialogue");
+    const d = blTheme.dialogue;
+    const lines = d.lines.map(line => `
+      <div class="bl-dialog-line">
+        <div class="bl-dialog-speaker">${escHTML(line.speaker)}</div>
+        <div class="bl-dialog-nl">${escHTML(line.nl)}</div>
+        <div class="bl-dialog-en">${escHTML(line.en)}</div>
+      </div>`).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;font-style:italic">
+        ${escHTML(d.context.en)}
+      </p>
+      <div class="bl-dialog-list">${lines}</div>
+      <button class="btn-primary" onclick="blNext()">Next step →</button>`;
+  }
+
+  // ── STEP 6: SENTENCE BUILDER ─────────────
+  function renderBlSentenceBuilder() {
+    blSetHeader(6, "Build a sentence");
+    sbSentences = [...blTheme.sentences];
+    sbIdx       = 0;
+    renderSbItem();
+  }
+
+  function renderSbItem() {
+    const s       = sbSentences[sbIdx];
+    const correct = s.nl.split(/\s+/);
+    sbTray    = [];
+    sbPool    = [...correct].sort(() => Math.random() - 0.5);
+    sbChecked = false;
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        Sentence ${sbIdx + 1} of ${sbSentences.length}
+      </p>
+      <div class="sb-prompt-en">"${escHTML(s.en)}"</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Tap the Dutch words in the correct order:</p>
+      <div class="sb-tray-row">
+        <div class="sb-tray" id="sb-tray"></div>
+        <button class="sb-undo-btn" onclick="sbUndoLast()" id="sb-undo">↩ Undo</button>
+      </div>
+      <div class="sb-chip-pool" id="sb-pool"></div>
+      <div id="sb-feedback"></div>
+      <button class="btn-primary" id="sb-check-btn" onclick="sbCheck()" disabled>Check →</button>
+      <button class="btn-primary" id="sb-next-btn" style="display:none" onclick="sbNextSentence()">
+        ${sbIdx === sbSentences.length - 1 ? "Next step →" : "Next sentence →"}
+      </button>`;
+    renderSbPool();
+  }
+
+  function renderSbPool() {
+    const poolEl = document.getElementById("sb-pool");
+    const trayEl = document.getElementById("sb-tray");
+    const checkBtn = document.getElementById("sb-check-btn");
+    const undoBtn  = document.getElementById("sb-undo");
+    if (!poolEl) return;
+
+    poolEl.innerHTML = sbPool.map((w, i) =>
+      `<button class="sb-chip" id="sb-chip-${i}" onclick="sbTapChip(${i})">${escHTML(w)}</button>`
+    ).join("");
+
+    trayEl.innerHTML = sbTray.map(w =>
+      `<span class="sb-tray-chip">${escHTML(w)}</span>`
+    ).join("");
+
+    const s = sbSentences[sbIdx];
+    checkBtn.disabled = sbTray.length !== s.nl.split(/\s+/).length;
+    undoBtn.disabled  = sbTray.length === 0;
+  }
+
+  function sbTapChip(poolIdx) {
+    if (sbChecked) return;
+    const word = sbPool[poolIdx];
+    sbPool.splice(poolIdx, 1);
+    sbTray.push(word);
+    renderSbPool();
+  }
+
+  function sbUndoLast() {
+    if (sbChecked || sbTray.length === 0) return;
+    const word = sbTray.pop();
+    sbPool.push(word);
+    renderSbPool();
+  }
+
+  function sbCheck() {
+    sbChecked = true;
+    const s       = sbSentences[sbIdx];
+    const correct = s.nl.split(/\s+/);
+    const isRight = sbTray.join(" ") === correct.join(" ");
+
+    // Colour tray chips
+    const trayEl = document.getElementById("sb-tray");
+    trayEl.innerHTML = sbTray.map((w, i) => {
+      const cls = correct[i] === w ? "correct" : "wrong";
+      return `<span class="sb-tray-chip ${cls}">${escHTML(w)}</span>`;
+    }).join("");
+
+    document.getElementById("sb-check-btn").style.display = "none";
+    const fb = document.getElementById("sb-feedback");
+    if (isRight) {
+      fb.innerHTML = `<div class="sb-feedback correct">✓ Correct!</div>`;
+    } else {
+      fb.innerHTML = `<div class="sb-feedback wrong">Not quite. The correct sentence is:<br><strong>${escHTML(s.nl)}</strong></div>`;
+    }
+    document.getElementById("sb-next-btn").style.display = "block";
+    document.getElementById("sb-undo").disabled = true;
+    document.querySelectorAll(".sb-chip").forEach(b => b.disabled = true);
+  }
+
+  function sbNextSentence() {
+    sbIdx++;
+    if (sbIdx < sbSentences.length) {
+      renderSbItem();
+    } else {
+      blNext();
+    }
+  }
+
+  // ── STEP 7: REVIEW ────────────────────────
+  function renderBlReview() {
+    blSetHeader(7, "Review");
+    markThemeCompleted(blTheme.id, blListenScore, blPicScore);
+    const rows = blTheme.words.map(w => `
+      <div class="bl-review-row">
+        ${w.image
+          ? `<img src="${escHTML(w.image)}" alt="${escHTML(w.nl)}" class="bl-review-img">`
+          : `<span class="bl-review-emoji">${w.emoji || "📖"}</span>`}
+        <div class="bl-review-info">
+          <div class="bl-review-nl">${escHTML(w.nl)}</div>
+          <div class="bl-review-en">${escHTML(w.en)}</div>
+        </div>
+      </div>`).join("");
+
+    document.getElementById("bl-content").innerHTML = `
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:14px">
+        Words from this lesson
+      </p>
+      <div class="bl-review-list">${rows}</div>
+      <button class="btn-primary" onclick="blRestartLesson()">Practice again</button>
+      <button class="btn-secondary" onclick="showScreen('screen-beginner-themes')">← Choose another lesson</button>`;
+  }
+
+  // ── NAVIGATION ────────────────────────────
+  function blNext() {
+    blStep++;
+    if (blTheme) markThemeStepReached(blTheme.id, blStep);
+    renderBlStep();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function blRestartLesson() {
+    blWordIdx     = 0;
+    blListenItems = [...blTheme.words].sort(() => Math.random() - 0.5);
+    blListenIdx   = 0; blListenScore = 0;
+    blPicItems    = [...blTheme.words].sort(() => Math.random() - 0.5);
+    blPicIdx      = 0; blPicScore    = 0;
+    blStep        = 1;   // skip intro, go straight to learn
+    renderBlStep();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+</script>
+</body>
+</html>

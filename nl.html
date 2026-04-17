@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verhalen Lezen</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4ff;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 40px;
+      max-width: 640px;
+      width: 100%;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #7c8db0;
+      cursor: pointer;
+      margin-bottom: 24px;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .back-link:hover { color: #4f74e3; }
+
+    /* ════════════════════════════════
+       SCREEN 0 — VERHAALKEUZE
+    ════════════════════════════════ */
+    .select-header { margin-bottom: 28px; }
+    .select-header p {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #7c8db0;
+      margin-bottom: 6px;
+    }
+    .select-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1f36;
+    }
+
+    .story-cards { display: flex; flex-direction: column; gap: 16px; }
+
+    .story-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border: 2px solid #dce3f5;
+      border-radius: 16px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      background: #f7f9ff;
+    }
+    .story-card:hover {
+      border-color: #4f74e3;
+      background: #eef2ff;
+      transform: translateY(-2px);
+    }
+
+    .story-card-emoji { font-size: 38px; line-height: 1; flex-shrink: 0; }
+
+    .story-card-info { flex: 1; }
+    .story-card-info h2 { font-size: 17px; font-weight: 800; color: #1a1f36; margin-bottom: 4px; }
+    .story-card-info p  { font-size: 13px; color: #7c8db0; line-height: 1.5; }
+
+    .story-card-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: #e8ecf5;
+      color: #4f74e3;
+      border-radius: 99px;
+      padding: 4px 10px;
+    }
+    .tag.done { background: #eafaf1; color: #27ae60; }
+    .difficulty { display: flex; gap: 3px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #dce3f5; }
+    .dot.filled { background: #4f74e3; }
+    .arrow-icon { font-size: 20px; color: #b0bcd4; flex-shrink: 0; }
+
+    /* ════════════════════════════════
+       SCREEN 1 — VERHAAL LEZEN
+    ════════════════════════════════ */
+    .story-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #7c8db0;
+      margin-bottom: 6px;
+    }
+    .story-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1f36;
+      margin-bottom: 20px;
+    }
+    .story-text {
+      font-size: 17px;
+      line-height: 1.9;
+      color: #333;
+      background: #f7f9ff;
+      border-left: 4px solid #4f74e3;
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-bottom: 28px;
+    }
+    .story-text p { margin-bottom: 14px; }
+    .story-text p:last-child { margin-bottom: 0; }
+
+    /* ════════════════════════════════
+       SCREEN 2 — VRAGEN
+    ════════════════════════════════ */
+    .progress-bar-wrap {
+      background: #e8ecf5;
+      border-radius: 99px;
+      height: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: #4f74e3;
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+    .progress-label { font-size: 13px; color: #7c8db0; margin-bottom: 20px; text-align: right; }
+
+    details.story-mini {
+      font-size: 14px;
+      color: #555;
+      background: #f7f9ff;
+      border-left: 3px solid #4f74e3;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 22px;
+      line-height: 1.75;
+    }
+    details.story-mini summary {
+      font-weight: 700;
+      color: #4f74e3;
+      cursor: pointer;
+      font-size: 13px;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    details.story-mini summary::before {
+      content: '▶';
+      font-size: 9px;
+      transition: transform 0.2s;
+    }
+    details.story-mini[open] summary::before { transform: rotate(90deg); }
+    details.story-mini[open] summary { margin-bottom: 12px; }
+    details.story-mini .mini-text p { margin-bottom: 10px; }
+    details.story-mini .mini-text p:last-child { margin-bottom: 0; }
+
+    .question-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1f36;
+      margin-bottom: 22px;
+      line-height: 1.4;
+    }
+
+    .options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #f7f9ff;
+      border: 2px solid #dce3f5;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 16px;
+      color: #1a1f36;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      width: 100%;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: #4f74e3;
+      background: #eef2ff;
+      transform: translateY(-1px);
+    }
+    .option-btn .letter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #dce3f5;
+      font-weight: 700;
+      font-size: 13px;
+      color: #4f74e3;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .option-btn.correct { background: #eafaf1; border-color: #27ae60; }
+    .option-btn.correct .letter { background: #27ae60; color: white; }
+    .option-btn.wrong   { background: #fff0f0; border-color: #e74c3c; }
+    .option-btn.wrong   .letter { background: #e74c3c; color: white; }
+    .option-btn:disabled { cursor: default; }
+
+    .feedback-msg {
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .feedback-msg.correct { background: #eafaf1; color: #1e8449; display: block; }
+    .feedback-msg.wrong   { background: #fff0f0; color: #c0392b; display: block; }
+
+    /* ════════════════════════════════
+       SCREEN 3 — RESULTATEN
+    ════════════════════════════════ */
+    .results-icon  { font-size: 60px; text-align: center; margin-bottom: 12px; }
+    .results-title { font-size: 26px; font-weight: 800; color: #1a1f36; text-align: center; margin-bottom: 6px; }
+    .results-score { font-size: 18px; color: #7c8db0; text-align: center; margin-bottom: 28px; }
+    .results-score span { color: #4f74e3; font-weight: 700; }
+
+    .results-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .results-list li { padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
+    .results-list li.ok   { background: #eafaf1; color: #1e8449; }
+    .results-list li.fail { background: #fff0f0; color: #c0392b; }
+    .results-list li .q-label { font-weight: 700; display: block; margin-bottom: 2px; }
+
+    /* ── GEDEELDE KNOPPEN ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      background: #4f74e3;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #3a5fc9; transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      background: transparent;
+      color: #4f74e3;
+      border: 2px solid #4f74e3;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: #eef2ff; }
+
+    .lang-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #7c8db0;
+      text-decoration: none;
+    }
+    .lang-link:hover { color: #4f74e3; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ════ SCHERM 0: VERHAALKEUZE ════ -->
+  <div id="screen-select" class="screen active">
+    <div class="select-header">
+      <p>Nederlandse Verhalen</p>
+      <h1>Kies een verhaal</h1>
+    </div>
+    <div class="story-cards" id="story-cards-wrap"></div>
+    <a class="lang-link" href="index.html">🇬🇧 Switch to English</a>
+  </div>
+
+  <!-- ════ SCHERM 1: VERHAAL LEZEN ════ -->
+  <div id="screen-story" class="screen">
+    <button class="back-link" onclick="showScreen('screen-select')">← Alle verhalen</button>
+    <p class="story-label">Lees het verhaal</p>
+    <h1 class="story-title" id="story-title"></h1>
+    <div class="story-text" id="story-body"></div>
+    <button class="btn-primary" onclick="startQuestions()">Ik ben klaar — start de vragen!</button>
+  </div>
+
+  <!-- ════ SCHERM 2: VRAGEN ════ -->
+  <div id="screen-question" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <p class="progress-label" id="progress-label"></p>
+
+    <details class="story-mini" id="story-mini-wrap">
+      <summary>Herlees het verhaal</summary>
+      <div class="mini-text" id="story-mini-text"></div>
+    </details>
+
+    <p class="question-text" id="question-text"></p>
+    <div class="options" id="options-wrap"></div>
+    <div class="feedback-msg" id="feedback-msg"></div>
+    <button class="btn-primary" id="next-btn" style="display:none;" onclick="nextQuestion()">Volgende vraag →</button>
+  </div>
+
+  <!-- ════ SCHERM 3: RESULTATEN ════ -->
+  <div id="screen-results" class="screen">
+    <div class="results-icon" id="results-icon"></div>
+    <h2 class="results-title" id="results-title"></h2>
+    <p class="results-score" id="results-score"></p>
+    <ul class="results-list" id="results-list"></ul>
+    <button class="btn-primary" onclick="startQuestions()">Opnieuw proberen</button>
+    <button class="btn-secondary" onclick="showScreen('screen-story')">Herlees het verhaal</button>
+    <button class="btn-secondary" onclick="showScreen('screen-select')">Kies een ander verhaal</button>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════
+  //  DATA
+  // ══════════════════════════════════════════════
+  const stories = [
+    {
+      title: "Familiedag in het Park",
+      emoji: "🧺",
+      teaser: "James en zijn familie brengen een zonnige zondag door in het park.",
+      difficulty: 1,
+      paragraphs: [
+        "Ik ben James. Dit is mijn familie.",
+        "Afgelopen zondag gingen we op een picknick. We gingen naar het park. De zon scheen en het was een mooie dag.",
+        "Eerst bracht mijn moeder veel lekkers mee. Ze had boterhammen, appels en sap. Ik hielp haar de tas te dragen.",
+        "Daarna vonden we een grote boom in het park. We gingen op een kleedje zitten. We aten veel. De boterhammen waren lekker.",
+        "Na het eten speelden we verstoppertje. Ik verstopte me achter de boom. Mijn vader zocht me. Hij zei: \"Ik zie je, James!\"",
+        "We lachten allemaal. Het was een leuke dag in het park. Ik hou van mijn familie."
+      ],
+      questions: [
+        {
+          question: "Wat is de naam van de jongen?",
+          options: ["Tom", "Jack", "James", "Sam"],
+          correct: 2
+        },
+        {
+          question: "Waar ging de familie heen afgelopen zondag?",
+          options: ["Naar het strand", "Naar een restaurant", "Naar school", "Naar het park"],
+          correct: 3
+        },
+        {
+          question: "Wat nam moeder mee?",
+          options: ["Koekjes, melk en fruit", "Boterhammen, appels en sap", "Pizza, chips en water", "Taart, thee en koekjes"],
+          correct: 1
+        },
+        {
+          question: "Welk spel speelden ze na het eten?",
+          options: ["Voetbal", "Tikkertje", "Verstoppertje", "Vangen"],
+          correct: 2
+        },
+        {
+          question: "Waar verstopte James zich?",
+          options: ["Achter een struik", "Onder het kleedje", "Achter zijn moeder", "Achter de boom"],
+          correct: 3
+        }
+      ]
+    },
+    {
+      title: "Mijn Hond Max",
+      emoji: "🐶",
+      teaser: "Maak kennis met Max — de grappigste hond van de buurt.",
+      difficulty: 1,
+      paragraphs: [
+        "Ik heet Lisa. Ik heb een hond. Hij heet Max.",
+        "Max is groot en bruin. Hij heeft lange oren en een korte staart. Hij rent graag in de tuin.",
+        "Elke ochtend geef ik Max zijn eten. Hij eet het heel snel op. Daarna drinkt hij water uit zijn bak.",
+        "Na het ontbijt gaan we een wandeling maken. Max trekt aan de riem. Hij wil rennen! We lopen langs de winkels en de school.",
+        "Als we thuiskomen is Max moe. Hij slaapt op zijn grote rode mand. Hij snurkt een beetje.",
+        "Ik hou heel veel van Max. Hij is mijn beste vriend."
+      ],
+      questions: [
+        {
+          question: "Wat is de naam van het meisje?",
+          options: ["Emma", "Lisa", "Anna", "Sara"],
+          correct: 1
+        },
+        {
+          question: "Hoe ziet Max eruit?",
+          options: ["Klein en wit", "Groot en bruin", "Piepklein en zwart", "Lang en grijs"],
+          correct: 1
+        },
+        {
+          question: "Wat doet Max na het eten?",
+          options: ["Hij speelt met een bal", "Hij drinkt water uit zijn bak", "Hij rent in de tuin", "Hij slaapt op de bank"],
+          correct: 1
+        },
+        {
+          question: "Waar lopen ze langs?",
+          options: ["Het park en de rivier", "Het strand en de winkels", "De winkels en de school", "De school en het park"],
+          correct: 2
+        },
+        {
+          question: "Welke kleur heeft Max zijn mand?",
+          options: ["Blauw", "Groen", "Geel", "Rood"],
+          correct: 3
+        }
+      ]
+    }
+  ];
+
+  // ══════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════
+  let currentStory = null;
+  let currentQ     = 0;
+  let score        = 0;
+  let answers      = [];
+  const progress   = {};
+
+  // ══════════════════════════════════════════════
+  //  VERHAALKEUZE
+  // ══════════════════════════════════════════════
+  function buildSelectionCards() {
+    const wrap = document.getElementById("story-cards-wrap");
+    wrap.innerHTML = "";
+    stories.forEach((story, idx) => {
+      const p    = progress[idx];
+      const done = p && p.done;
+      const best = p ? p.best : null;
+
+      const card = document.createElement("div");
+      card.className = "story-card";
+      card.onclick   = () => openStory(idx);
+
+      let dots = "";
+      for (let d = 1; d <= 3; d++) {
+        dots += `<span class="dot${d <= story.difficulty ? " filled" : ""}"></span>`;
+      }
+
+      const tagHTML = done
+        ? `<span class="tag done">✓ Klaar · ${best}/${story.questions.length}</span>`
+        : `<span class="tag">${story.questions.length} vragen</span>`;
+
+      card.innerHTML = `
+        <div class="story-card-emoji">${story.emoji}</div>
+        <div class="story-card-info">
+          <h2>${story.title}</h2>
+          <p>${story.teaser}</p>
+        </div>
+        <div class="story-card-meta">
+          ${tagHTML}
+          <div class="difficulty">${dots}</div>
+        </div>
+        <span class="arrow-icon">›</span>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  function openStory(idx) {
+    currentStory = stories[idx];
+    currentStory._idx = idx;
+
+    document.getElementById("story-title").textContent = currentStory.title;
+
+    const bodyEl = document.getElementById("story-body");
+    bodyEl.innerHTML = currentStory.paragraphs.map(p => `<p>${p}</p>`).join("");
+
+    const miniEl = document.getElementById("story-mini-text");
+    miniEl.innerHTML = currentStory.paragraphs.map(p => `<p>${p}</p>`).join("");
+
+    showScreen("screen-story");
+  }
+
+  // ══════════════════════════════════════════════
+  //  SCHERMEN
+  // ══════════════════════════════════════════════
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (id === "screen-select") buildSelectionCards();
+  }
+
+  // ══════════════════════════════════════════════
+  //  VRAGEN
+  // ══════════════════════════════════════════════
+  function startQuestions() {
+    currentQ = 0;
+    score    = 0;
+    answers  = [];
+    renderQuestion();
+    showScreen("screen-question");
+  }
+
+  function renderQuestion() {
+    const q     = currentStory.questions[currentQ];
+    const total = currentStory.questions.length;
+
+    const pct = (currentQ / total) * 100;
+    document.getElementById("progress-fill").style.width = pct + "%";
+    document.getElementById("progress-label").textContent =
+      "Vraag " + (currentQ + 1) + " van " + total;
+
+    document.getElementById("question-text").textContent = q.question;
+
+    const wrap = document.getElementById("options-wrap");
+    wrap.innerHTML = "";
+    const letters = ["A", "B", "C", "D"];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<span class="letter">${letters[i]}</span> ${opt}`;
+      btn.onclick   = () => selectAnswer(i);
+      wrap.appendChild(btn);
+    });
+
+    const fb = document.getElementById("feedback-msg");
+    fb.className   = "feedback-msg";
+    fb.textContent = "";
+    document.getElementById("next-btn").style.display = "none";
+    document.getElementById("story-mini-wrap").removeAttribute("open");
+  }
+
+  function selectAnswer(chosen) {
+    const q       = currentStory.questions[currentQ];
+    const correct = q.correct;
+    const isRight = chosen === correct;
+
+    if (isRight) score++;
+    answers.push({ correct: isRight, chosen, right: correct });
+
+    document.querySelectorAll(".option-btn").forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === correct) btn.classList.add("correct");
+      if (i === chosen && !isRight) btn.classList.add("wrong");
+    });
+
+    const fb = document.getElementById("feedback-msg");
+    if (isRight) {
+      fb.textContent = "Correct! Goed gedaan.";
+      fb.className   = "feedback-msg correct";
+    } else {
+      fb.textContent = "Niet helemaal. Het juiste antwoord was: \"" + q.options[correct] + "\"";
+      fb.className   = "feedback-msg wrong";
+    }
+
+    const nextBtn = document.getElementById("next-btn");
+    nextBtn.style.display = "block";
+    const isLast = currentQ === currentStory.questions.length - 1;
+    nextBtn.textContent = isLast ? "Bekijk mijn resultaten!" : "Volgende vraag →";
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    if (currentQ < currentStory.questions.length) {
+      renderQuestion();
+    } else {
+      saveProgress();
+      renderResults();
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  //  RESULTATEN
+  // ══════════════════════════════════════════════
+  function saveProgress() {
+    const idx = currentStory._idx;
+    if (!progress[idx] || score > progress[idx].best) {
+      progress[idx] = { done: true, best: score };
+    }
+  }
+
+  function renderResults() {
+    const total = currentStory.questions.length;
+    const pct   = score / total;
+
+    let icon, title;
+    if (pct === 1)        { icon = "🏆"; title = "Perfecte score!"; }
+    else if (pct >= 0.75) { icon = "🌟"; title = "Geweldig gedaan!"; }
+    else if (pct >= 0.5)  { icon = "👍"; title = "Goed geprobeerd!"; }
+    else                  { icon = "📖"; title = "Blijf oefenen!"; }
+
+    document.getElementById("results-icon").textContent  = icon;
+    document.getElementById("results-title").textContent = title;
+    document.getElementById("results-score").innerHTML   =
+      "Je had <span>" + score + " van de " + total + "</span> goed.";
+
+    const list = document.getElementById("results-list");
+    list.innerHTML = "";
+    answers.forEach((a, i) => {
+      const q  = currentStory.questions[i];
+      const li = document.createElement("li");
+      li.className = a.correct ? "ok" : "fail";
+      const mark = a.correct ? "✓" : "✗";
+      li.innerHTML = `<span class="q-label">${mark} ${q.question}</span>` +
+        (a.correct
+          ? `Jouw antwoord: <strong>${q.options[a.chosen]}</strong>`
+          : `Jouw antwoord: ${q.options[a.chosen]} — Juist: <strong>${q.options[a.right]}</strong>`);
+      list.appendChild(li);
+    });
+
+    showScreen("screen-results");
+  }
+
+  // ── Start ──
+  buildSelectionCards();
+</script>
+</body>
+</html>
